@@ -1,0 +1,1287 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --font-sans: var(--font-cairo);
+}
+
+:root {
+  color-scheme: light;
+  --app-header-height: 4rem;
+  --app-sidebar-width: 18rem;
+  --app-bg: #eef3ef;
+  --app-bg-muted: #e4ebe6;
+  --app-sidebar-bg: rgba(252, 254, 252, 0.88);
+  --app-surface: #ffffff;
+  --app-surface-elevated: #ffffff;
+  --app-glass: rgba(255, 255, 255, 0.78);
+  --app-glass-border: rgba(255, 255, 255, 0.65);
+  --app-border: rgba(15, 40, 28, 0.1);
+  --app-border-strong: rgba(15, 40, 28, 0.18);
+  --app-text: #0a1410;
+  --app-text-muted: #334840;
+  --app-text-dim: #5c6d64;
+  --app-primary: #15803d;
+  --app-primary-soft: rgba(21, 128, 61, 0.1);
+  --app-accent: #166534;
+  --app-accent-dark: #14532d;
+  --app-gold: #a67c00;
+  --app-gold-soft: rgba(166, 124, 0, 0.1);
+  --app-input-bg: #ffffff;
+  --app-shadow: 0 1px 2px rgba(10, 20, 16, 0.04), 0 4px 16px rgba(10, 20, 16, 0.06);
+  --app-shadow-md: 0 4px 20px rgba(10, 20, 16, 0.08), 0 1px 3px rgba(10, 20, 16, 0.04);
+  --app-shadow-lg: 0 12px 40px rgba(10, 20, 16, 0.1), 0 4px 12px rgba(10, 20, 16, 0.05);
+  --app-shadow-glow: 0 0 0 1px rgba(21, 128, 61, 0.08), 0 8px 32px rgba(21, 128, 61, 0.12);
+  --app-radius: 1rem;
+  --app-radius-lg: 1.375rem;
+  --app-radius-xl: 1.75rem;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --app-transition: 0.28s var(--ease-out-expo);
+  --space-page: 1.25rem;
+  --space-page-lg: 1.75rem;
+  --space-card: 1.5rem;
+  --space-card-sm: 1.125rem;
+  --space-section: 1.75rem;
+  --space-input-y: 0.6875rem;
+  --space-input-x: 0.9375rem;
+  --app-shell-pad: 0.75rem;
+  --app-shell-gap: 0.75rem;
+  --app-panel-radius: 1.25rem;
+}
+
+.dark {
+  color-scheme: dark;
+  --app-bg: #080a09;
+  --app-bg-muted: #0f1311;
+  --app-sidebar-bg: rgba(12, 16, 14, 0.92);
+  --app-surface: #141a17;
+  --app-surface-elevated: #1a221e;
+  --app-glass: rgba(20, 26, 23, 0.82);
+  --app-glass-border: rgba(255, 255, 255, 0.06);
+  --app-border: rgba(255, 255, 255, 0.08);
+  --app-border-strong: rgba(255, 255, 255, 0.14);
+  --app-text: #f2f5f3;
+  --app-text-muted: #a8b5ad;
+  --app-text-dim: #6d7a72;
+  --app-primary: #34d399;
+  --app-primary-soft: rgba(52, 211, 153, 0.12);
+  --app-accent: #22c55e;
+  --app-accent-dark: #16a34a;
+  --app-gold: #d4a853;
+  --app-gold-soft: rgba(212, 168, 83, 0.12);
+  --app-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+  --app-shadow-md: 0 4px 20px rgba(0, 0, 0, 0.32);
+  --app-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.4);
+  --app-shadow-glow: 0 0 0 1px rgba(52, 211, 153, 0.12), 0 8px 32px rgba(52, 211, 153, 0.08);
+}
+
+@media (min-width: 640px) {
+  :root {
+    --app-header-height: 5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --app-shell-pad: 1rem;
+    --app-shell-gap: 1rem;
+  }
+}
+
+body {
+  font-family: var(--font-cairo), system-ui, sans-serif;
+  background-color: var(--app-bg);
+  color: var(--app-text);
+  font-feature-settings: 'kern' 1, 'liga' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--app-primary) 28%, transparent);
+  color: var(--app-text);
+}
+
+/* Scrollbar premium */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--app-accent) 35%, transparent) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--app-accent) 30%, transparent);
+  border-radius: 99px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--app-accent) 50%, transparent);
+}
+
+/* Coque application — panneaux flottants */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  padding-top: max(var(--app-shell-pad), env(safe-area-inset-top, 0px));
+  padding-bottom: max(var(--app-shell-pad), env(safe-area-inset-bottom, 0px));
+  padding-inline: var(--app-shell-pad);
+}
+
+.app-shell-row {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  gap: var(--app-shell-gap);
+}
+
+.app-sidebar {
+  overflow: hidden;
+}
+
+.app-content-panel {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  border-radius: var(--app-panel-radius);
+  border: 1px solid var(--app-border);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow);
+}
+
+.app-content-panel > :first-child {
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+}
+
+/* Page module unifiée */
+.module-page {
+  position: relative;
+  min-height: 100%;
+}
+
+.module-page-bg {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 100% 0%, color-mix(in srgb, var(--app-accent) 8%, transparent), transparent),
+    radial-gradient(ellipse 60% 40% at 0% 100%, color-mix(in srgb, var(--app-gold) 6%, transparent), transparent),
+    var(--app-bg);
+}
+
+.clients-page-bg,
+.pressing-page-bg {
+  background: var(--app-bg);
+}
+
+.app-header {
+  top: env(safe-area-inset-top, 0px);
+}
+
+html.app-fullscreen,
+html.app-fullscreen body {
+  height: 100%;
+  overflow: hidden;
+}
+
+html.app-fullscreen .app-shell {
+  min-height: 100dvh;
+  height: 100dvh;
+}
+
+html.app-fullscreen .app-main {
+  overflow-y: auto;
+}
+
+html {
+  overflow-y: auto;
+}
+
+.app-main {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+}
+
+/* Tableaux — lisibilité clair / sombre */
+.app-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.875rem;
+}
+
+.app-table thead th {
+  background-color: color-mix(in srgb, var(--app-bg-muted) 85%, var(--app-surface));
+  color: var(--app-text-muted);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  letter-spacing: 0.01em;
+  padding: 0.875rem 1rem;
+  text-align: right;
+  border-bottom: 1px solid var(--app-border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.app-table tbody td {
+  padding: 0.875rem 1rem;
+  color: var(--app-text);
+  border-bottom: 1px solid var(--app-border);
+  vertical-align: top;
+  background-color: var(--app-surface);
+  transition: background-color var(--app-transition);
+}
+
+.app-table tbody tr:nth-child(even) td {
+  background-color: color-mix(in srgb, var(--app-bg-muted) 45%, var(--app-surface));
+}
+
+.app-table tbody tr:hover td {
+  background-color: color-mix(in srgb, var(--app-primary-soft) 70%, var(--app-bg-muted));
+}
+
+.app-surface-panel {
+  background-color: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-lg);
+  padding: var(--space-card);
+  box-shadow: var(--app-shadow-md);
+  transition: box-shadow var(--app-transition), border-color var(--app-transition);
+}
+
+.app-surface-panel:hover {
+  box-shadow: var(--app-shadow-lg);
+}
+
+.app-glass-panel {
+  background: var(--app-glass);
+  border: 1px solid var(--app-glass-border);
+  border-radius: var(--app-radius-lg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--app-shadow-md);
+}
+
+.app-brand-loader {
+  animation: brand-loader-pulse 2s var(--ease-out-expo) infinite;
+}
+
+@keyframes brand-loader-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: var(--app-shadow-glow);
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow: 0 0 0 1px rgba(21, 128, 61, 0.15), 0 12px 40px rgba(21, 128, 61, 0.2);
+  }
+}
+
+.dark .app-table tbody tr:nth-child(even) td {
+  background-color: var(--app-bg-muted);
+}
+
+.dark .app-surface-panel {
+  box-shadow: none;
+}
+
+/* ——— Dashboard accueil ——— */
+.dashboard-page {
+  min-height: 100%;
+}
+
+.dashboard-bg {
+  background:
+    radial-gradient(ellipse 100% 70% at 50% -25%, rgba(16, 185, 129, 0.22), transparent),
+    radial-gradient(ellipse 55% 45% at 95% 15%, rgba(59, 130, 246, 0.1), transparent),
+    radial-gradient(ellipse 50% 40% at 5% 85%, rgba(244, 63, 94, 0.09), transparent),
+    radial-gradient(ellipse 40% 35% at 50% 100%, rgba(245, 158, 11, 0.08), transparent),
+    linear-gradient(165deg, #f4faf6 0%, #eef6f0 35%, #f0f4f8 70%, #eaeef2 100%);
+}
+
+.dark .dashboard-bg {
+  background:
+    radial-gradient(ellipse 90% 60% at 50% -20%, rgba(16, 185, 129, 0.14), transparent),
+    radial-gradient(ellipse 50% 40% at 100% 30%, rgba(59, 130, 246, 0.08), transparent),
+    linear-gradient(165deg, #0a0d0c 0%, #0e1210 40%, #0c0f12 100%);
+}
+
+.dashboard-mesh {
+  background-image:
+    radial-gradient(at 20% 30%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
+    radial-gradient(at 80% 20%, rgba(14, 165, 233, 0.06) 0px, transparent 45%),
+    radial-gradient(at 60% 80%, rgba(244, 63, 94, 0.05) 0px, transparent 50%);
+}
+
+.dashboard-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='72' height='72' viewBox='0 0 72 72' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23166534' fill-opacity='0.045'%3E%3Cpath d='M36 8c15.464 0 28 12.536 28 28S51.464 64 36 64 8 51.464 8 36 20.536 8 36 8z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+@keyframes dashboard-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dashboard-stats-enter {
+  animation: dashboard-fade-up 0.55s ease-out 0.08s both;
+}
+
+.dashboard-section-enter {
+  animation: dashboard-fade-up 0.5s ease-out 0.14s both;
+}
+
+.dashboard-cards-enter {
+  animation: dashboard-fade-up 0.6s ease-out 0.18s both;
+}
+
+.dashboard-pricing-enter {
+  animation: dashboard-fade-up 0.65s ease-out 0.28s both;
+}
+
+.dashboard-card-enter {
+  animation: dashboard-fade-up 0.55s ease-out both;
+}
+
+/* ——— Processing board ——— */
+.processing-page {
+  width: 100%;
+}
+
+.olive-add-hero {
+  position: relative;
+}
+
+.olive-add-hero-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='72' height='72' viewBox='0 0 72 72' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.08'%3E%3Cpath d='M36 8c15.464 0 28 12.536 28 28S51.464 64 36 64 8 51.464 8 36 20.536 8 36 8zm0 2C21.641 10 10 21.641 10 36s11.641 26 26 26 26-11.641 26-26S50.359 10 36 10zm-1 10h2v10h-2V20zm0 22h2v10h-2V42zm-16-7h10v2H19v-2zm24 0h10v2H43v-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+.processing-header-enter {
+  animation: dashboard-fade-up 0.5s ease-out both;
+}
+
+.processing-toolbar-enter {
+  animation: dashboard-fade-up 0.55s ease-out 0.08s both;
+}
+
+.processing-dock-enter {
+  animation: dashboard-fade-up 0.4s ease-out both;
+}
+
+.processing-table-wrap {
+  animation: dashboard-fade-up 0.6s ease-out 0.12s both;
+}
+
+.processing-table-wrap::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.processing-table-wrap::-webkit-scrollbar-thumb {
+  background: var(--processing-scrollbar, rgba(16, 185, 129, 0.35));
+  border-radius: 4px;
+}
+
+.processing-pattern-green {
+  background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23166534' fill-opacity='0.06'%3E%3Cpath d='M40 12c15.464 0 28 12.536 28 28S55.464 68 40 68 12 55.464 12 40 24.536 12 40 12z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.processing-pattern-zbouch {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%232563eb' fill-opacity='0.07'%3E%3Cpath d='M30 5l5 15h16l-13 9 5 15-13-9-13 9 5-15-13-9h16z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.processing-pattern-ripe {
+  background-image: url("data:image/svg+xml,%3Csvg width='64' height='64' viewBox='0 0 64 64' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23e11d48' fill-opacity='0.06'%3E%3Ccircle cx='32' cy='32' r='14'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.dark .processing-page {
+  background: linear-gradient(180deg, #0c0f0d 0%, #101412 50%, #0a0c0b 100%) !important;
+}
+
+.module-hero-enter {
+  animation: dashboard-fade-up 0.55s ease-out both;
+}
+
+.module-stats-enter {
+  animation: dashboard-fade-up 0.6s ease-out 0.06s both;
+}
+
+.module-panel-enter {
+  animation: dashboard-fade-up 0.65s ease-out 0.1s both;
+}
+
+.module-stat-enter {
+  animation: dashboard-fade-up 0.5s ease-out both;
+}
+
+/* ——— Finance ——— */
+.finance-page {
+  min-height: 100%;
+}
+
+.finance-bg {
+  background:
+    radial-gradient(ellipse 90% 60% at 50% -15%, rgba(16, 185, 129, 0.15), transparent),
+    radial-gradient(ellipse 50% 40% at 100% 80%, rgba(59, 130, 246, 0.08), transparent),
+    linear-gradient(180deg, #f8faf6 0%, #eef2eb 100%);
+}
+
+.dark .finance-bg {
+  background: linear-gradient(180deg, #0c0f0d 0%, #121614 100%);
+}
+
+/* ——— Print hub ——— */
+.print-page-bg {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(14, 165, 233, 0.12), transparent),
+    linear-gradient(180deg, #f0f9ff 0%, #f8fafc 100%);
+}
+
+.dark .print-page-bg {
+  background: linear-gradient(180deg, #0c1218 0%, #0a0c0b 100%);
+}
+
+/* ——— Settings ——— */
+.settings-page-bg {
+  background:
+    radial-gradient(ellipse 70% 50% at 0% 0%, rgba(139, 92, 246, 0.1), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(16, 185, 129, 0.08), transparent),
+    linear-gradient(180deg, #fafaf9 0%, #f5f5f4 100%);
+}
+
+.dark .settings-page-bg {
+  background: linear-gradient(180deg, #0f0f0f 0%, #0a0c0b 100%);
+}
+
+/* ——— Order row status (tableaux) ——— */
+.order-row-taken {
+  background-color: #d1fae5 !important;
+}
+
+.order-row-taken td {
+  background-color: inherit;
+}
+
+.order-row-cancelled {
+  background-color: #fee2e2 !important;
+}
+
+.order-row-cancelled td {
+  background-color: inherit;
+}
+
+.dark .order-row-taken {
+  background-color: rgba(6, 78, 59, 0.45) !important;
+}
+
+.dark .order-row-cancelled {
+  background-color: rgba(127, 29, 29, 0.4) !important;
+}
+
+/* ——— Login ——— */
+.login-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.login-hero-bg {
+  background: linear-gradient(
+    145deg,
+    #052e1a 0%,
+    #0f4d2e 28%,
+    #166534 55%,
+    #0d3d2e 78%,
+    #1c1917 100%
+  );
+}
+
+.login-hero-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+.login-panel-bg {
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(16, 185, 129, 0.12), transparent),
+    linear-gradient(180deg, #f8faf6 0%, #eef2eb 50%, #e8ece6 100%);
+}
+
+.dark .login-panel-bg {
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(16, 185, 129, 0.08), transparent),
+    linear-gradient(180deg, #0c0f0d 0%, #121614 100%);
+}
+
+.login-hero-enter {
+  animation: dashboard-fade-up 0.7s ease-out both;
+}
+
+.login-features-enter {
+  animation: dashboard-fade-up 0.75s ease-out 0.15s both;
+}
+
+.login-footer-enter {
+  animation: dashboard-fade-up 0.8s ease-out 0.25s both;
+}
+
+.login-card-enter {
+  animation: dashboard-fade-up 0.65s ease-out 0.1s both;
+}
+
+.login-form-enter {
+  animation: dashboard-fade-up 0.6s ease-out 0.2s both;
+}
+
+.login-logo {
+  animation: login-logo-pulse 3s ease-in-out infinite;
+}
+
+@keyframes login-logo-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.35);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 14px 30px -5px rgba(16, 185, 129, 0.45);
+  }
+}
+
+.login-orb-1 {
+  animation: login-orb-drift 12s ease-in-out infinite;
+}
+
+.login-orb-2 {
+  animation: login-orb-drift 14s ease-in-out infinite reverse;
+}
+
+@keyframes login-orb-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(12px, -16px) scale(1.08);
+  }
+}
+
+.login-float-1 {
+  animation: login-float 6s ease-in-out infinite;
+}
+
+.login-float-2 {
+  animation: login-float 7s ease-in-out infinite 1s;
+}
+
+.login-float-3 {
+  animation: login-float 5.5s ease-in-out infinite 0.5s;
+}
+
+@keyframes login-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(6deg);
+  }
+}
+
+.login-submit-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* ——— Impression thermique 80mm (XPrinter) ——— */
+.thermal-receipt {
+  box-sizing: border-box;
+  width: 72mm;
+  max-width: 72mm;
+  margin: 0 auto;
+  padding: 2mm 3mm 4mm;
+  background: #fff;
+  color: #000;
+  font-family: var(--font-cairo), 'Segoe UI', Tahoma, sans-serif;
+  font-size: 11px;
+  line-height: 1.35;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+.thermal-block {
+  margin-bottom: 3mm;
+}
+
+.thermal-center {
+  text-align: center;
+}
+
+.thermal-title {
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.thermal-section-title {
+  margin: 0 0 2mm;
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.thermal-strong {
+  font-weight: 800;
+}
+
+.thermal-muted {
+  color: #333;
+  font-size: 10px;
+}
+
+.thermal-xs {
+  font-size: 9px;
+  color: #666;
+}
+
+.thermal-mono {
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.thermal-wrap {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.thermal-divider {
+  border-top: 1px dashed #000;
+  margin: 3mm 0;
+}
+
+.thermal-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2mm;
+  margin-bottom: 1.5mm;
+  line-height: 1.3;
+}
+
+.thermal-label {
+  flex: 0 0 auto;
+  max-width: 42%;
+  font-weight: 600;
+  color: #222;
+}
+
+.thermal-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  font-weight: 700;
+}
+
+.thermal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+
+.thermal-table th,
+.thermal-table td {
+  border: 1px solid #000;
+  padding: 1mm 1.5mm;
+  text-align: center;
+}
+
+.thermal-table th {
+  font-weight: 800;
+  background: #f0f0f0;
+}
+
+/* Liste clients / téléphones 80mm */
+.thermal-client-phones-doc {
+  padding: 1.5mm 2mm 3mm;
+}
+
+.thermal-client-list {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 9px;
+  line-height: 1.25;
+}
+
+.thermal-client-list col.col-num {
+  width: 14%;
+}
+
+.thermal-client-list col.col-last {
+  width: 27%;
+}
+
+.thermal-client-list col.col-first {
+  width: 27%;
+}
+
+.thermal-client-list col.col-phone {
+  width: 32%;
+}
+
+.thermal-client-list thead {
+  display: table-header-group;
+}
+
+.thermal-client-list th,
+.thermal-client-list td {
+  border: 1px solid #000;
+  padding: 1.2mm 1mm;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.thermal-client-list th {
+  font-size: 7.5px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  background: #e8e8e8;
+  padding: 1.5mm 0.5mm;
+}
+
+.thermal-client-list td.cell-num {
+  text-align: center;
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-size: 10px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.thermal-client-list td.cell-name {
+  text-align: right;
+  font-weight: 600;
+  font-size: 9px;
+}
+
+.thermal-client-list td.cell-phone {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: left;
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.thermal-client-list tbody tr:nth-child(even) td {
+  background: #f7f7f7;
+}
+
+/* وصل المعالجة — épuré 80mm */
+.thermal-receipt-compact {
+  padding: 1mm 2mm 2mm;
+  font-size: 10px;
+  line-height: 1.25;
+}
+
+/* Impression groupée */
+.batch-print-doc .batch-receipt-item {
+  page-break-after: always;
+  break-after: page;
+  margin-bottom: 4mm;
+}
+
+.batch-print-doc .batch-receipt-item:last-child {
+  page-break-after: auto;
+  break-after: auto;
+}
+
+.thermal-card-item {
+  width: 72mm;
+  margin: 0 auto 4mm;
+  padding: 3mm;
+  border: 1px dashed #000;
+  border-radius: 2mm;
+  text-align: center;
+  page-break-after: always;
+  break-after: page;
+}
+
+/* بطاقة تعريف — format thermique */
+.thermal-client-card {
+  position: relative;
+  width: 72mm;
+  min-height: 46mm;
+  margin: 0 auto 4mm;
+  padding: 2.5mm;
+  border: 1.5px solid #000;
+  border-radius: 1.5mm;
+  box-sizing: border-box;
+  page-break-after: always;
+  break-after: page;
+  background: #fff;
+}
+
+.batch-cards-doc .thermal-client-card:last-child {
+  page-break-after: auto;
+  break-after: auto;
+}
+
+.thermal-client-card-type-mark {
+  position: absolute;
+  left: 3mm;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+  color: #000;
+  opacity: 0.92;
+  pointer-events: none;
+  user-select: none;
+}
+
+.thermal-client-card-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1mm 6mm 1mm 10mm;
+  min-height: 100%;
+}
+
+.thermal-client-card-number-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 2mm 0 2.5mm;
+}
+
+.thermal-client-card-number {
+  font-size: 72px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 0.9;
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: #000;
+  -webkit-text-stroke: 0.5px #000;
+  paint-order: stroke fill;
+}
+
+.thermal-client-card-multi {
+  margin-top: 1mm;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #333;
+}
+
+.thermal-client-card-divider {
+  width: 78%;
+  height: 0;
+  border-top: 1px solid #000;
+  margin: 0 0 2.5mm;
+  opacity: 0.35;
+}
+
+.thermal-client-card-stats {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5mm;
+}
+
+.thermal-client-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3mm;
+  width: 100%;
+}
+
+.thermal-client-card-row--bags {
+  margin-bottom: 0.5mm;
+}
+
+.thermal-client-card-row--equation {
+  gap: 4mm;
+  padding: 1mm 0;
+}
+
+.thermal-client-card-row--weight {
+  margin-top: 0.5mm;
+  padding-top: 1.5mm;
+  border-top: 1px dashed #999;
+  width: 70%;
+}
+
+.thermal-client-card-value {
+  font-size: 22px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: #000;
+}
+
+.thermal-client-card-value--weight {
+  font-size: 24px;
+}
+
+.thermal-client-card-eq-sign {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  opacity: 0.85;
+}
+
+.thermal-client-card-row-labels {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  width: 72%;
+  margin-top: -1mm;
+  font-size: 7px;
+  font-weight: 700;
+  color: #555;
+  text-align: center;
+}
+
+.thermal-client-card-hint {
+  font-size: 7px;
+  font-weight: 700;
+  color: #555;
+  margin-right: 2mm;
+}
+
+.thermal-client-card-row--bags .thermal-client-card-value {
+  order: 2;
+}
+
+.thermal-client-card-row--bags .thermal-client-card-hint {
+  order: 1;
+}
+
+.thermal-client-card-unit {
+  font-size: 11px;
+  font-weight: 800;
+  color: #333;
+  margin-right: 1mm;
+}
+
+.thermal-card-header {
+  margin-bottom: 2mm;
+  padding-bottom: 2mm;
+  border-bottom: 1px solid #ccc;
+}
+
+.thermal-card-company {
+  margin: 0;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.thermal-card-type {
+  margin: 1mm 0 0;
+  font-size: 8px;
+  color: #444;
+}
+
+.thermal-card-number {
+  font-size: 28px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  margin: 2mm 0;
+}
+
+.thermal-card-name {
+  margin: 0 0 2mm;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.thermal-card-meta {
+  display: flex;
+  justify-content: center;
+  gap: 3mm;
+  font-size: 9px;
+  font-weight: 600;
+  color: #333;
+}
+
+.thermal-card-phone {
+  margin: 2mm 0 0;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.thermal-compact-header {
+  margin-bottom: 1.5mm;
+  text-align: center;
+}
+
+.thermal-compact-title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.thermal-compact-meta {
+  margin: 1mm 0 0;
+  font-size: 9px;
+  color: #444;
+}
+
+.thermal-olive-type-banner {
+  margin: 1.5mm 0 0;
+  padding: 1.5mm 1mm;
+  text-align: center;
+  border-top: 1px dashed #000;
+  border-bottom: 1px dashed #000;
+}
+
+.thermal-olive-type-banner__line {
+  margin: 0;
+  line-height: 1.3;
+}
+
+.thermal-olive-type-banner__line + .thermal-olive-type-banner__line {
+  margin-top: 1mm;
+}
+
+.thermal-olive-type-banner__label {
+  display: block;
+  font-size: 8px;
+  font-weight: 700;
+  color: #444;
+  margin-bottom: 0.5mm;
+}
+
+.thermal-olive-type-banner__value {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  color: #000;
+}
+
+.thermal-rule {
+  border: none;
+  border-top: 1px solid #000;
+  margin: 2mm 0;
+  opacity: 0.35;
+}
+
+.thermal-compact-section {
+  margin-bottom: 2mm;
+}
+
+.thermal-compact-section-label {
+  margin: 0 0 1mm;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #222;
+}
+
+.thermal-compact-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2mm;
+  margin-bottom: 0.8mm;
+  line-height: 1.25;
+}
+
+.thermal-compact-label {
+  flex: 0 0 auto;
+  max-width: 48%;
+  font-size: 9px;
+  font-weight: 600;
+  color: #333;
+}
+
+.thermal-compact-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.thermal-compact-row--emphasis .thermal-compact-label {
+  font-weight: 700;
+  color: #000;
+}
+
+.thermal-compact-row--emphasis .thermal-compact-value {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+.thermal-compact-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5mm;
+  font-size: 8px;
+  color: #555;
+  text-align: center;
+}
+
+.thermal-compact-meta-inline {
+  font-weight: 600;
+  color: #555;
+}
+
+.thermal-compact-subline {
+  margin: 1mm 0 0;
+  padding-right: 1mm;
+  font-size: 8px;
+  line-height: 1.3;
+  color: #444;
+}
+
+.thermal-compact-empty {
+  margin: 0;
+  font-size: 9px;
+  color: #666;
+  text-align: center;
+}
+
+@media print {
+  .thermal-receipt-compact {
+    padding: 0.5mm 1.5mm 1.5mm !important;
+  }
+
+  .thermal-rule {
+    opacity: 0.5;
+  }
+}
+
+@media print {
+  .thermal-client-list thead {
+    display: table-header-group;
+  }
+
+  .thermal-client-list tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .thermal-client-list td.cell-phone {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .thermal-client-phones-doc {
+    padding: 1mm 1.5mm !important;
+  }
+}
+
+/* Aperçu écran (rouleau 80mm) */
+.thermal-preview-shell {
+  min-height: calc(100vh - 7rem);
+  padding: 1.5rem 1rem 2rem;
+  background: linear-gradient(180deg, #e8ece6 0%, #d4d8d2 100%);
+}
+
+.thermal-preview-frame {
+  width: 80mm;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 4mm 0;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .app-shell,
+  .app-shell-row,
+  .app-content-panel,
+  .app-main {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    display: block !important;
+    background: #fff !important;
+  }
+
+  .thermal-preview-shell {
+    display: none !important;
+  }
+
+  .thermal-print-only {
+    display: block !important;
+  }
+
+  html,
+  body {
+    width: 80mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .thermal-receipt {
+    width: 72mm !important;
+    max-width: 72mm !important;
+    margin: 0 !important;
+    padding: 2mm 3mm !important;
+    page-break-inside: avoid;
+  }
+
+  .thermal-block,
+  .thermal-row,
+  .thermal-table tr {
+    page-break-inside: avoid;
+  }
+
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+}

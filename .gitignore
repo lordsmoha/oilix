@@ -1,0 +1,49 @@
+# Oilix monorepo
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.next/
+**/.next/
+out/
+build/
+coverage/
+*.log
+*.tsbuildinfo
+.DS_Store
+*.pem
+.vercel
+.turbo
+
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+!.env.local.example
+!**/.env.example
+!**/.env.local.example
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+
+# Mobile / Expo local
+mobile/.expo/
+filtration/.expo/
+mobile/android/.gradle/
+mobile/android/app/build/
+mobile/ios/Pods/
+
+# Filtration local tooling
+filtration/node_modules/
+
+# Prisma
+**/prisma/*.db
+**/prisma/*.db-journal
+
+# Local scripts / temp
+*.bak
+tmp/
+temp/

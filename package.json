@@ -1,0 +1,24 @@
+{
+  "name": "oilix",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Système de gestion d'huilerie / moulin à olives",
+  "scripts": {
+    "dev:api": "npm run start:dev --prefix api",
+    "dev:web": "npm run dev --prefix web",
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "build:api": "npm run build --prefix api",
+    "build:web": "npm run build --prefix web",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:migrate": "npm run prisma:migrate --prefix api",
+    "db:seed": "npm run prisma:seed --prefix api",
+    "db:studio": "npm run prisma:studio --prefix api",
+    "dev:mobile": "npm run start --prefix mobile",
+    "dev:filtration": "npm run start --prefix filtration",
+    "dev:all": "concurrently \"npm run dev:api\" \"npm run dev:web\" \"npm run dev:mobile\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
