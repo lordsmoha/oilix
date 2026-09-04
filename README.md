@@ -42,7 +42,11 @@ npm run dev
 
 Server: **192.168.1.249** · path: **`/home/oilixu/oilix`**
 
-Full guide: **[docs/DEPLOY-FROM-ZERO.md](docs/DEPLOY-FROM-ZERO.md)**
+**Fresh server / reinstall (start here):**
+
+- Full guide: **[docs/DEPLOY-FROM-ZERO.md](docs/DEPLOY-FROM-ZERO.md)**
+- Checklist: **[docs/DEPLOY-CHECKLIST.md](docs/DEPLOY-CHECKLIST.md)**
+- Docs index: **[docs/README.md](docs/README.md)**
 
 ### Critical `web/.env.local` values (Nginx)
 

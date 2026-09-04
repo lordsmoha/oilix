@@ -1,6 +1,9 @@
 # Déploiement Oilix sur Ubuntu (réseau local, sans Docker)
 
-Guide pour installer et faire tourner **Oilix** sur un serveur Ubuntu accessible en LAN.
+> **Pour une réinstallation complète du serveur, utilisez plutôt :**  
+> **[DEPLOY-FROM-ZERO.md](./DEPLOY-FROM-ZERO.md)** + **[DEPLOY-CHECKLIST.md](./DEPLOY-CHECKLIST.md)**
+
+Guide historique pour installer et faire tourner **Oilix** sur un serveur Ubuntu accessible en LAN.
 
 | Paramètre | Valeur |
 |-----------|--------|
