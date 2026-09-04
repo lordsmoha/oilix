@@ -80,6 +80,7 @@ export default function NewSalePage() {
   const [oilType, setOilType] = useState<OilTypeValue>('GREEN');
   const [customerId, setCustomerId] = useState('');
   const [customerQ, setCustomerQ] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [method, setMethod] = useState<'CONTAINER' | 'LOOSE' | 'CONTAINER_ONLY'>(
     canWrite ? 'LOOSE' : 'CONTAINER_ONLY',
   );
@@ -118,10 +119,11 @@ export default function NewSalePage() {
 
   const customersQ = useQuery({
     queryKey: ['oil-sales-customers', customerQ],
+    enabled: customerQ.trim().length >= 1 && !selectedCustomer,
     queryFn: async () =>
       (
         await api.get<{ items: Customer[] }>('/oil-sales/customers', {
-          params: { q: customerQ || undefined, limit: 40 },
+          params: { q: customerQ.trim(), limit: 20 },
         })
       ).data.items,
   });
@@ -143,7 +145,6 @@ export default function NewSalePage() {
   const sourceMeta = oilSourceMeta(oilSource);
   const meta = oilMeta(oilType);
   const containers = containersQ.data ?? [];
-  const selectedCustomer = (customersQ.data ?? []).find((c) => c.id === customerId);
 
   useEffect(() => {
     if (!settingsQ.data) return;
@@ -298,6 +299,7 @@ export default function NewSalePage() {
     onSuccess: (c) => {
       toast.success('تم إنشاء الزبون');
       setCustomerId(c.id);
+      setSelectedCustomer(c);
       setCustomerQ(c.name);
       setShowNewCustomer(false);
       setNewName('');
@@ -556,7 +558,7 @@ export default function NewSalePage() {
               ) : null}
             </div>
 
-            {customerId && selectedCustomer ? (
+            {selectedCustomer ? (
               <div className="flex items-center justify-between gap-2 rounded-xl border border-amber-700/30 bg-amber-50/50 px-3 py-2 dark:bg-amber-950/20">
                 <div>
                   <p className="font-bold">{selectedCustomer.name}</p>
@@ -570,6 +572,7 @@ export default function NewSalePage() {
                   className="rounded-lg p-1.5 text-[var(--app-text-dim)] hover:bg-[var(--app-bg-muted)]"
                   onClick={() => {
                     setCustomerId('');
+                    setSelectedCustomer(null);
                     setCustomerQ('');
                   }}
                   aria-label="تغيير الزبون"
@@ -588,22 +591,31 @@ export default function NewSalePage() {
                     onChange={(e) => setCustomerQ(e.target.value)}
                   />
                 </div>
-                <div className="max-h-28 overflow-y-auto rounded-xl border border-[var(--app-border)]">
-                  {(customersQ.data ?? []).map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => {
-                        setCustomerId(c.id);
-                        setCustomerQ(c.name);
-                      }}
-                      className="flex w-full items-center justify-between px-3 py-1.5 text-sm hover:bg-[var(--app-bg-muted)]"
-                    >
-                      <span className="font-bold">{c.name}</span>
-                      <span className="text-xs text-[var(--app-text-dim)]">{c.phone || '—'}</span>
-                    </button>
-                  ))}
-                </div>
+                {customerQ.trim().length >= 1 ? (
+                  <div className="max-h-28 overflow-y-auto rounded-xl border border-[var(--app-border)]">
+                    {(customersQ.data ?? []).length === 0 && !customersQ.isFetching ? (
+                      <p className="px-3 py-2 text-xs text-[var(--app-text-dim)]">لا نتائج</p>
+                    ) : (
+                      (customersQ.data ?? []).map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => {
+                            setCustomerId(c.id);
+                            setSelectedCustomer(c);
+                            setCustomerQ(c.name);
+                          }}
+                          className="flex w-full items-center justify-between px-3 py-1.5 text-sm hover:bg-[var(--app-bg-muted)]"
+                        >
+                          <span className="font-bold">{c.name}</span>
+                          <span className="text-xs text-[var(--app-text-dim)]">
+                            {c.phone || '—'}
+                          </span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                ) : null}
               </>
             )}
 

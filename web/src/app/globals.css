@@ -722,6 +722,51 @@ html {
   background: #f0f0f0;
 }
 
+/* ——— يومية بيع الزيت (80mm matrix) ——— */
+.oil-day-report-table {
+  table-layout: fixed;
+}
+
+.oil-day-report-table th,
+.oil-day-report-table td {
+  border: 1px dashed #000;
+  padding: 3px 2px;
+  text-align: center;
+  vertical-align: middle;
+  word-break: break-word;
+}
+
+.oil-day-report-corner {
+  width: 18%;
+  border: 1px dashed #000 !important;
+}
+
+.oil-day-report-th {
+  font-weight: 900;
+  font-size: 8px;
+  line-height: 1.15;
+}
+
+.oil-day-report-label {
+  font-weight: 800;
+  text-align: right !important;
+  padding-right: 3px !important;
+  white-space: nowrap;
+  font-size: 8px;
+}
+
+.oil-day-report-cell {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 8px;
+}
+
+@media print {
+  .oil-day-report {
+    width: 80mm !important;
+  }
+}
+
 /* Liste clients / téléphones 80mm */
 .thermal-client-phones-doc {
   padding: 1.5mm 2mm 3mm;

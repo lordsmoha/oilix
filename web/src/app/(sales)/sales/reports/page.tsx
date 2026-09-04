@@ -2,10 +2,13 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Printer } from 'lucide-react';
 import { api } from '@/lib/api';
 import { OIL_SOURCES, OIL_TYPES, oilMeta, oilSourceMeta } from '@/lib/sales-nav';
 import { formatNumber } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useAuthStore } from '@/lib/auth-store';
 
 type Report = {
   summary: {
@@ -132,8 +135,18 @@ type Report = {
 };
 
 export default function SalesReportsPage() {
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
+  const canReports = useAuthStore((s) => s.hasPermission('OIL_SALES_REPORTS_VIEW'));
+  const canPrint = useAuthStore((s) => s.hasPermission('OIL_SALES_PRINT_RECEIPT'));
+  const canExport = useAuthStore((s) => s.hasPermission('OIL_SALES_REPORTS_EXPORT'));
+  const canOpenDayReport = canReports || canPrint || canExport;
+
+  const today = (() => {
+    const n = new Date();
+    return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+  })();
+
+  const [from, setFrom] = useState(today);
+  const [to, setTo] = useState(today);
   const [oilSource, setOilSource] = useState('');
   const [oilType, setOilType] = useState('');
 
@@ -154,9 +167,40 @@ export default function SalesReportsPage() {
 
   const s = reportQ.data?.summary;
 
+  function openDayReport(autoPrint = false) {
+    const params = new URLSearchParams();
+    params.set('from', from || today);
+    params.set('to', to || from || today);
+    params.set('date', from || today);
+    if (autoPrint) params.set('print', '1');
+    window.open(`/oil-day-report?${params.toString()}`, '_blank', 'noopener');
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <h1 className="text-2xl font-black">تقارير بيع الزيت</h1>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 className="text-2xl font-black">تقارير بيع الزيت</h1>
+        {canOpenDayReport ? (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2"
+              onClick={() => openDayReport(false)}
+            >
+              <Printer className="h-4 w-4" />
+              يومية بيع الزيت
+            </Button>
+            <Button
+              type="button"
+              className="gap-2 bg-amber-700 hover:bg-amber-800"
+              onClick={() => openDayReport(true)}
+            >
+              طباعة اليومية
+            </Button>
+          </div>
+        ) : null}
+      </div>
 
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <Input label="من" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />

@@ -9,9 +9,11 @@ export default function PrintLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (localStorage.getItem('oilix_token')) return;
-    const oilSalePrint =
-      pathname.startsWith('/oil-sale') || pathname.startsWith('/print/oil-sale');
-    router.replace(oilSalePrint ? '/login?workspace=sales' : '/');
+    const salesPrint =
+      pathname.startsWith('/oil-sale') ||
+      pathname.startsWith('/print/oil-sale') ||
+      pathname.startsWith('/oil-day-report');
+    router.replace(salesPrint ? '/login?workspace=sales' : '/');
   }, [router, pathname]);
 
   return <div className="min-h-screen bg-white text-stone-900">{children}</div>;
