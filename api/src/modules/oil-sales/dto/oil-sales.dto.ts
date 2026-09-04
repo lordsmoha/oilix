@@ -220,6 +220,13 @@ export class CreateOilSaleDto {
   @Min(0)
   assistancePerLitre?: number;
 
+  /** Cash paid now (defaults to full net if omitted). */
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  amountPaid?: number;
+
   @IsOptional()
   @IsString()
   @MaxLength(1000)
@@ -412,6 +419,10 @@ export class OilSaleQueryDto {
   status?: OilSaleStatus;
 
   @IsOptional()
+  @IsString()
+  paymentStatus?: string;
+
+  @IsOptional()
   @IsUUID()
   customerId?: string;
 
@@ -551,6 +562,45 @@ export class UpdateOilSalesSettingsDto {
   @IsString()
   @MaxLength(200)
   receiptFooter?: string;
+}
+
+export class RecordDebtPaymentDto {
+  @IsUUID()
+  customerId!: string;
+
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0.01)
+  amount!: number;
+
+  @IsOptional()
+  @IsUUID()
+  saleId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  paymentMethod?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  reference?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  notes?: string;
+}
+
+export class DebtorsQueryDto {
+  @IsOptional()
+  @IsString()
+  q?: string;
+
+  @IsOptional()
+  @IsString()
+  sort?: string;
 }
 
 export class PreviewSaleDto {

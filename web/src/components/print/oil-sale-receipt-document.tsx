@@ -16,6 +16,9 @@ export type OilSaleReceiptPayload = {
     assistancePerLitreTotal?: string | number;
     totalAssistance: string | number;
     finalAmount: string | number;
+    amountPaid?: string | number;
+    remainingAmount?: string | number;
+    paymentStatus?: string;
     notes?: string | null;
     saleDate: string;
     saleTime: string;
@@ -189,6 +192,18 @@ export function OilSaleReceiptDocument({ data }: { data: OilSaleReceiptPayload }
       <div className="flex items-center justify-between text-[14px] font-black">
         <span>الصافي للدفع</span>
         <span className="tabular-nums">{money(sale.finalAmount)} د.ج</span>
+      </div>
+
+      <div className="mt-1 space-y-0.5 text-[11px]">
+        <Row label="المدفوع" value={`${money(sale.amountPaid ?? sale.finalAmount)} د.ج`} bold />
+        {Number(sale.remainingAmount ?? 0) > 0 ? (
+          <div className="mt-1 flex items-center justify-between border border-black px-1 py-1 text-[12px] font-black">
+            <span>المتبقي على الزبون</span>
+            <span className="tabular-nums">{money(sale.remainingAmount ?? 0)} د.ج</span>
+          </div>
+        ) : (
+          <Row label="المتبقي" value="0 د.ج" />
+        )}
       </div>
 
       {sale.status === 'CANCELLED' ? (

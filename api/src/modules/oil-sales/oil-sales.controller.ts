@@ -27,12 +27,14 @@ import {
   CreateOilContainerDto,
   CreateOilCustomerDto,
   CreateOilSaleDto,
+  DebtorsQueryDto,
   InventoryCountDto,
   OilCustomerQueryDto,
   OilMovementQueryDto,
   OilReportQueryDto,
   OilSaleQueryDto,
   PreviewSaleDto,
+  RecordDebtPaymentDto,
   StockAdjustmentDto,
   UpdateOilContainerDto,
   UpdateOilCustomerDto,
@@ -40,6 +42,7 @@ import {
 } from './dto/oil-sales.dto';
 import { OilSalesService } from './oil-sales.service';
 import { CashRegisterService } from './cash-register.service';
+import { OilSalesDebtService } from './oil-sales-debt.service';
 import {
   CashAdjustDto,
   CashSessionQueryDto,
@@ -58,6 +61,7 @@ export class OilSalesController {
   constructor(
     private oilSales: OilSalesService,
     private cash: CashRegisterService,
+    private debts: OilSalesDebtService,
   ) {}
 
   @Get('dashboard')
@@ -326,6 +330,58 @@ export class OilSalesController {
   @RequirePermissions(Permission.OIL_SALES_PRINT_RECEIPT)
   receipt(@Param('id') id: string) {
     return this.oilSales.receiptPayload(id);
+  }
+
+  @Get('debts/summary')
+  @RequirePermissions(Permission.OIL_SALES_DEBTS_VIEW)
+  debtsSummary() {
+    return this.debts.debtorsSummary();
+  }
+
+  @Get('debts')
+  @RequirePermissions(Permission.OIL_SALES_DEBTS_VIEW)
+  debtsList(@Query() query: DebtorsQueryDto) {
+    return this.debts.listDebtors(query);
+  }
+
+  @Get('debts/customers/:id')
+  @RequirePermissions(Permission.OIL_SALES_DEBTS_VIEW)
+  debtCustomer(@Param('id') id: string) {
+    return this.debts.customerDebtDetail(id);
+  }
+
+  @Post('debts/payments')
+  @RequirePermissions(Permission.OIL_SALES_DEBTS_RECORD_PAYMENT)
+  recordDebtPayment(@Body() dto: RecordDebtPaymentDto, @CurrentUser() user: JwtPayload) {
+    return this.debts.recordPayment(dto, user.sub, user.permissions ?? [], user.role);
+  }
+
+  @Get('debts/payments/:id/receipt')
+  @RequirePermissions(Permission.OIL_SALES_DEBTS_VIEW)
+  debtPaymentReceipt(@Param('id') id: string) {
+    return this.debts.paymentReceiptPayload(id);
+  }
+
+  @Post('sales/:id/pay')
+  @RequirePermissions(Permission.OIL_SALES_DEBTS_RECORD_PAYMENT)
+  async paySale(
+    @Param('id') id: string,
+    @Body() body: { amount: number; notes?: string; reference?: string },
+    @CurrentUser() user: JwtPayload,
+  ) {
+    const sale = await this.oilSales.findSale(id);
+    return this.debts.recordPayment(
+      {
+        customerId: sale.customerId,
+        saleId: id,
+        amount: body.amount,
+        notes: body.notes,
+        reference: body.reference,
+      },
+      user.sub,
+      user.permissions ?? [],
+      user.role,
+    );
   }
 
   @Get('reports')

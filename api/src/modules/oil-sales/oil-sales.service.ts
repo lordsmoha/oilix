@@ -13,6 +13,8 @@ import {
   OilSaleLineKind,
   OilPricingMode,
   OilContainerStockMovementType,
+  OilSalePaymentStatus,
+  OilCustomerLedgerType,
 } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { AUDIT_ACTIONS, AUDIT_MODULES } from '../../common/constants/audit';
@@ -21,6 +23,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { RealtimeService } from '../realtime/realtime.service';
 import { REALTIME_ENTITIES } from '../realtime/realtime.constants';
 import { CashRegisterService } from './cash-register.service';
+import { OilSalesDebtService } from './oil-sales-debt.service';
+import { computeSalePaymentFields } from './oil-sales-debt.math';
 import { currentDevice } from '../devices/device-context';
 import type { OilDashboardQueryDto } from '../devices/dto/devices.dto';
 import type { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
@@ -105,6 +109,7 @@ export class OilSalesService {
     private audit: AuditService,
     private realtime: RealtimeService,
     private cashRegisters: CashRegisterService,
+    private debts: OilSalesDebtService,
   ) {}
 
   private userSelect = {
@@ -494,11 +499,28 @@ export class OilSalesService {
       };
     });
 
+    const [todayPaidAgg, debtSummary] = await Promise.all([
+      this.prisma.oilSale.aggregate({
+        where: todayWhere,
+        _sum: { amountPaid: true, remainingAmount: true },
+      }),
+      this.debts.debtorsSummary(),
+    ]);
+
+    const cashFromSalesToday = num(todayPaidAgg._sum.amountPaid);
+    const newDebtFromSalesToday = num(todayPaidAgg._sum.remainingAmount);
+
     return {
       bySource,
       globalByType,
       byType,
-      today: todayAgg,
+      today: {
+        ...todayAgg,
+        cashFromSales: cashFromSalesToday,
+        newDebt: newDebtFromSalesToday,
+        cashReceived: cashFromSalesToday + debtSummary.collectedToday,
+      },
+      debt: debtSummary,
       allRegistersToday: {
         count: globalAggRow._count,
         litres: num(globalAggRow._sum.quantityL),
@@ -581,7 +603,7 @@ export class OilSalesService {
       ];
     }
 
-    const [items, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       this.prisma.oilSaleCustomer.findMany({
         where,
         orderBy: { name: 'asc' },
@@ -593,6 +615,29 @@ export class OilSalesService {
       }),
       this.prisma.oilSaleCustomer.count({ where }),
     ]);
+
+    const debtGroups = rows.length
+      ? await this.prisma.oilSale.groupBy({
+          by: ['customerId'],
+          where: {
+            seasonId,
+            customerId: { in: rows.map((r) => r.id) },
+            status: OilSaleStatus.COMPLETED,
+            remainingAmount: { gt: 0 },
+          },
+          _sum: { remainingAmount: true },
+          _count: true,
+        })
+      : [];
+
+    const items = rows.map((c) => {
+      const d = debtGroups.find((g) => g.customerId === c.id);
+      return {
+        ...c,
+        debt: d ? num(d._sum.remainingAmount) : 0,
+        unpaidSalesCount: d?._count ?? 0,
+      };
+    });
 
     return {
       items,
@@ -678,9 +723,21 @@ export class OilSalesService {
         a.gross += num(s.grossAmount);
         a.assistance += num(s.totalAssistance);
         a.net += num(s.finalAmount);
+        a.paid += num(s.amountPaid);
+        a.debt += num(s.remainingAmount);
+        if (num(s.remainingAmount) > 0) a.unpaidSalesCount += 1;
         return a;
       },
-      { litres: 0, gross: 0, assistance: 0, net: 0, count: completed.length },
+      {
+        litres: 0,
+        gross: 0,
+        assistance: 0,
+        net: 0,
+        paid: 0,
+        debt: 0,
+        unpaidSalesCount: 0,
+        count: completed.length,
+      },
     );
 
     return { customer, sales, totals };
@@ -1181,6 +1238,30 @@ export class OilSalesService {
     const headerOilType =
       prepared.find((p) => p.oilType && p.quantityL > 0)?.oilType ?? null;
 
+    let paymentFields;
+    try {
+      const paidNow =
+        dto.amountPaid == null || dto.amountPaid === undefined
+          ? amounts.finalAmount
+          : Number(dto.amountPaid);
+      paymentFields = computeSalePaymentFields(amounts.finalAmount, paidNow);
+    } catch (e) {
+      const code = e instanceof Error ? e.message : '';
+      if (code === 'PAYMENT_EXCEEDS_NET') {
+        throw new BadRequestException('المبلغ المدفوع يتجاوز صافي البيع');
+      }
+      throw new BadRequestException('مبلغ الدفع غير صالح');
+    }
+
+    if (paymentFields.remainingAmount > 0) {
+      if (!hasPermission(permissions, 'OIL_SALES_SALES_ALLOW_DEBT', role)) {
+        throw new ForbiddenException('ليس لديك صلاحية البيع بالدين');
+      }
+      if (!dto.customerId) {
+        throw new BadRequestException('البيع بالدين يتطلب اختيار زبون مسجّل');
+      }
+    }
+
     const oilByBucket = new Map<string, number>();
     for (const p of prepared) {
       if (p.quantityL > 0 && p.oilSource && p.oilType) {
@@ -1290,6 +1371,9 @@ export class OilSalesService {
           assistancePerLitreTotal: dec(amounts.assistancePerLitreTotal),
           totalAssistance: dec(amounts.totalAssistance),
           finalAmount: dec(amounts.finalAmount),
+          amountPaid: dec(paymentFields.amountPaid),
+          remainingAmount: dec(paymentFields.remainingAmount),
+          paymentStatus: paymentFields.paymentStatus as OilSalePaymentStatus,
           notes: dto.notes?.trim() || null,
           overrideStock: overrideOil,
           overrideContainerStock: overrideContainers,
@@ -1412,11 +1496,25 @@ export class OilSalesService {
       }
 
       if (session) {
-        await tx.cashRegisterSession.update({
-          where: { id: session.id },
-          data: { cashSales: { increment: amounts.finalAmount } },
-        });
+        if (paymentFields.amountPaid > 0) {
+          await tx.cashRegisterSession.update({
+            where: { id: session.id },
+            data: { cashSales: { increment: paymentFields.amountPaid } },
+          });
+        }
       }
+
+      await this.debts.appendSaleLedger(tx, {
+        seasonId,
+        customerId: dto.customerId,
+        saleId: created.id,
+        receiptNumber,
+        netAmount: amounts.finalAmount,
+        amountPaid: paymentFields.amountPaid,
+        remainingAmount: paymentFields.remainingAmount,
+        userId,
+        deviceId: device.id,
+      });
 
       return created;
     });
@@ -1512,6 +1610,15 @@ export class OilSalesService {
         throw new BadRequestException('البيع ملغى مسبقاً أو غير قابل للإلغاء');
       }
 
+      const laterAllocations = await tx.oilSalePaymentAllocation.count({
+        where: { saleId: id },
+      });
+      if (laterAllocations > 0) {
+        throw new BadRequestException(
+          'لا يمكن إلغاء بيع عليه تسديدات لاحقة. عالج التسديدات أولاً أو سجّل تسوية.',
+        );
+      }
+
       if (existing.cashSessionId) {
         await tx.$queryRaw`SELECT id FROM cash_register_sessions WHERE id = ${existing.cashSessionId} FOR UPDATE`;
         const cashSession = await tx.cashRegisterSession.findUnique({
@@ -1547,6 +1654,8 @@ export class OilSalesService {
         where: { id, status: OilSaleStatus.COMPLETED },
         data: {
           status: OilSaleStatus.CANCELLED,
+          remainingAmount: dec(0),
+          paymentStatus: OilSalePaymentStatus.PAID,
           cancelledAt: new Date(),
           cancelledById: userId,
           cancelReason: dto.reason?.trim() || null,
@@ -1557,6 +1666,34 @@ export class OilSalesService {
       }
       const sale = await tx.oilSale.findUniqueOrThrow({ where: { id } });
 
+      const refundCash = num(existing.amountPaid);
+      const clearedDebt = num(existing.remainingAmount);
+      if (clearedDebt > 0 || refundCash > 0) {
+        const balAgg = await tx.oilSale.aggregate({
+          where: {
+            seasonId,
+            customerId: existing.customerId,
+            status: OilSaleStatus.COMPLETED,
+            remainingAmount: { gt: 0 },
+          },
+          _sum: { remainingAmount: true },
+        });
+        await tx.oilCustomerLedgerEntry.create({
+          data: {
+            seasonId,
+            customerId: existing.customerId,
+            type: OilCustomerLedgerType.SALE_CANCELLATION,
+            saleId: id,
+            debit: dec(0),
+            credit: dec(clearedDebt),
+            balanceAfter: dec(num(balAgg._sum.remainingAmount)),
+            reference: `#${existing.receiptNumber}`,
+            notes: dto.reason?.trim() || 'إلغاء بيع',
+            userId,
+            deviceId: existing.deviceId,
+          },
+        });
+      }
       for (const [key, qty] of oilByBucket) {
         const { oilSource, oilType } = parseOilBucketKey(key);
         const bal = oilLocks.get(key)!;
@@ -1647,10 +1784,10 @@ export class OilSalesService {
         }
       }
 
-      if (existing.cashSessionId) {
+      if (existing.cashSessionId && num(existing.amountPaid) > 0) {
         await tx.cashRegisterSession.update({
           where: { id: existing.cashSessionId },
-          data: { cashRefunds: { increment: existing.finalAmount } },
+          data: { cashRefunds: { increment: existing.amountPaid } },
         });
       }
 
@@ -1690,6 +1827,16 @@ export class OilSalesService {
         movements: { orderBy: { createdAt: 'asc' } },
         containerMovements: { orderBy: { createdAt: 'asc' } },
         items: { orderBy: { sortOrder: 'asc' } },
+        paymentAllocations: {
+          include: {
+            payment: {
+              include: {
+                user: { select: this.userSelect },
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
       },
     });
     if (!sale) throw new NotFoundException('البيع غير موجود');
@@ -1721,6 +1868,9 @@ export class OilSalesService {
     if (query.oilSource) where.oilSource = query.oilSource;
     if (query.oilType) where.oilType = query.oilType;
     if (query.status) where.status = query.status;
+    if (query.paymentStatus) {
+      where.paymentStatus = query.paymentStatus as import('@prisma/client').OilSalePaymentStatus;
+    }
     if (query.customerId) where.customerId = query.customerId;
     if (query.cashSessionId) where.cashSessionId = query.cashSessionId;
     if (query.receiptNumber != null) where.receiptNumber = query.receiptNumber;
@@ -1808,6 +1958,8 @@ export class OilSalesService {
         a.assistancePerLitreTotal += num(s.assistancePerLitreTotal);
         a.totalAssistance += num(s.totalAssistance);
         a.net += num(s.finalAmount);
+        a.amountPaid += num(s.amountPaid);
+        a.remainingDebt += num(s.remainingAmount);
         return a;
       },
       {
@@ -1819,6 +1971,8 @@ export class OilSalesService {
         assistancePerLitreTotal: 0,
         totalAssistance: 0,
         net: 0,
+        amountPaid: 0,
+        remainingDebt: 0,
       },
     );
 
@@ -1971,6 +2125,22 @@ export class OilSalesService {
       unitsConsumedInOil: byContainer.reduce((s, r) => s + r.usedForOil, 0),
     };
 
+    const paymentWhere: Prisma.OilSalePaymentWhereInput = { seasonId };
+    if (query.from || query.to) {
+      paymentWhere.createdAt = {};
+      if (query.from) paymentWhere.createdAt.gte = new Date(`${query.from}T00:00:00`);
+      if (query.to) paymentWhere.createdAt.lte = new Date(`${query.to}T23:59:59.999`);
+    }
+    const repayAgg = await this.prisma.oilSalePayment.aggregate({
+      where: paymentWhere,
+      _sum: { amount: true },
+      _count: true,
+    });
+    const debtRepayments = num(repayAgg._sum.amount);
+    const newDebtCreated = summary.remainingDebt;
+    const cashFromSales = summary.amountPaid;
+    const cashCollected = cashFromSales + debtRepayments;
+
     const byRegisterMap = new Map<
       string,
       { cashRegisterId: string | null; code: string | null; name: string | null; count: number; litres: number; net: number }
@@ -2014,6 +2184,18 @@ export class OilSalesService {
         ...summary,
         oilRevenue: summary.gross - containerSales.emptyRevenue,
         containerRevenue: containerSales.emptyRevenue,
+        cashFromSales,
+        debtRepayments,
+        cashCollected,
+        newDebtCreated,
+        repaymentsCount: repayAgg._count,
+      },
+      cashVsRevenue: {
+        netSales: summary.net,
+        cashFromSales,
+        newDebt: newDebtCreated,
+        debtRepayments,
+        cashCollected,
       },
       byType,
       bySource,

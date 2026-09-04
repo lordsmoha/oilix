@@ -3,11 +3,12 @@ import { AuditModule } from '../audit/audit.module';
 import { OilSalesController } from './oil-sales.controller';
 import { OilSalesService } from './oil-sales.service';
 import { CashRegisterService } from './cash-register.service';
+import { OilSalesDebtService } from './oil-sales-debt.service';
 
 @Module({
   imports: [AuditModule],
   controllers: [OilSalesController],
-  providers: [OilSalesService, CashRegisterService],
-  exports: [OilSalesService, CashRegisterService],
+  providers: [OilSalesService, CashRegisterService, OilSalesDebtService],
+  exports: [OilSalesService, CashRegisterService, OilSalesDebtService],
 })
 export class OilSalesModule {}

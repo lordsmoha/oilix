@@ -22,6 +22,19 @@ type Report = {
     net: number;
     oilRevenue?: number;
     containerRevenue?: number;
+    amountPaid?: number;
+    remainingDebt?: number;
+    cashFromSales?: number;
+    debtRepayments?: number;
+    cashCollected?: number;
+    newDebtCreated?: number;
+  };
+  cashVsRevenue?: {
+    netSales: number;
+    cashFromSales: number;
+    newDebt: number;
+    debtRepayments: number;
+    cashCollected: number;
   };
   bySource?: Array<{
     oilSource: string;
@@ -253,6 +266,37 @@ export default function SalesReportsPage() {
           unit="د.ج"
         />
       </div>
+
+      {reportQ.data?.cashVsRevenue ? (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <Card
+            label="صافي المبيعات"
+            value={formatNumber(reportQ.data.cashVsRevenue.netSales, 0)}
+            unit="د.ج"
+          />
+          <Card
+            label="نقد من مبيعات الفترة"
+            value={formatNumber(reportQ.data.cashVsRevenue.cashFromSales, 0)}
+            unit="د.ج"
+          />
+          <Card
+            label="دين جديد (متبقي الفواتير)"
+            value={formatNumber(reportQ.data.cashVsRevenue.newDebt, 0)}
+            unit="د.ج"
+          />
+          <Card
+            label="تسديدات ديون"
+            value={formatNumber(reportQ.data.cashVsRevenue.debtRepayments, 0)}
+            unit="د.ج"
+          />
+          <Card
+            label="إجمالي النقد المحصّل"
+            value={formatNumber(reportQ.data.cashVsRevenue.cashCollected, 0)}
+            unit="د.ج"
+            emphasize
+          />
+        </div>
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Card

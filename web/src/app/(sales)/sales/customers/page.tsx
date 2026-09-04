@@ -18,6 +18,8 @@ type Customer = {
   commune?: string | null;
   address?: string | null;
   notes?: string | null;
+  debt?: number;
+  unpaidSalesCount?: number;
   _count?: { sales: number };
 };
 
@@ -54,7 +56,15 @@ export default function SalesCustomersPage() {
       (
         await api.get<{
           customer: Customer;
-          totals: { litres: number; net: number; count: number; assistance: number };
+          totals: {
+            litres: number;
+            net: number;
+            count: number;
+            assistance: number;
+            paid?: number;
+            debt?: number;
+            unpaidSalesCount?: number;
+          };
         }>(`/oil-sales/customers/${selectedId}`)
       ).data,
   });
@@ -127,10 +137,22 @@ export default function SalesCustomersPage() {
                 <div>
                   <p className="font-bold">{c.name}</p>
                   <p className="text-xs text-[var(--app-text-dim)]">{c.phone || '—'}</p>
+                  {(c.debt ?? 0) > 0 ? (
+                    <p className="mt-0.5 text-xs font-bold text-amber-800">
+                      دين {formatNumber(c.debt!, 0)} د.ج
+                    </p>
+                  ) : null}
                 </div>
-                <span className="text-xs font-bold text-[var(--app-text-muted)]">
-                  {c._count?.sales ?? 0} بيع
-                </span>
+                <div className="text-left">
+                  {(c.debt ?? 0) > 0 ? (
+                    <span className="mb-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900">
+                      مدين
+                    </span>
+                  ) : null}
+                  <p className="text-xs font-bold text-[var(--app-text-muted)]">
+                    {c._count?.sales ?? 0} بيع
+                  </p>
+                </div>
               </button>
             </li>
           ))}
@@ -210,7 +232,29 @@ export default function SalesCustomersPage() {
                 <dt className="text-[var(--app-text-dim)]">الصافي</dt>
                 <dd className="font-black">{formatNumber(detailQ.data.totals.net, 0)} د.ج</dd>
               </div>
+              <div>
+                <dt className="text-[var(--app-text-dim)]">المدفوع</dt>
+                <dd className="font-black">
+                  {formatNumber(detailQ.data.totals.paid ?? detailQ.data.totals.net, 0)} د.ج
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[var(--app-text-dim)]">الدين الحالي</dt>
+                <dd
+                  className={`font-black ${(detailQ.data.totals.debt ?? 0) > 0 ? 'text-amber-800' : ''}`}
+                >
+                  {formatNumber(detailQ.data.totals.debt ?? 0, 0)} د.ج
+                </dd>
+              </div>
             </dl>
+            {(detailQ.data.totals.debt ?? 0) > 0 ? (
+              <a
+                href={`/sales/debts/${detailQ.data.customer.id}`}
+                className="mt-3 inline-block text-sm font-bold text-amber-800 underline"
+              >
+                فتح حساب الدين
+              </a>
+            ) : null}
           </div>
         ) : null}
       </div>

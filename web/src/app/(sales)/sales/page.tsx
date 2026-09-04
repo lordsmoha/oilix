@@ -32,7 +32,22 @@ type Dash = {
     OilTypeValue,
     { stored: number; farmer: number; total: number; storedLoss: number; farmerLoss: number }
   >;
-  today: { count: number; litres: number; gross: number; assistance: number; net: number };
+  today: {
+    count: number;
+    litres: number;
+    gross: number;
+    assistance: number;
+    net: number;
+    cashFromSales?: number;
+    newDebt?: number;
+    cashReceived?: number;
+  };
+  debt?: {
+    totalDebt: number;
+    debtorsCount: number;
+    collectedToday: number;
+    newDebtToday: number;
+  };
   latestSales: Array<{
     id: string;
     receiptNumber: number;
@@ -89,6 +104,7 @@ export default function SalesDashboardPage() {
   const canSellContainers = useAuthStore((s) => s.hasPermission('OIL_SALES_CONTAINERS_SELL'));
   const canSeeLoss = useAuthStore((s) => s.hasPermission('OIL_SALES_STOCK_LOSS'));
   const canViewAll = useAuthStore((s) => s.hasPermission('OIL_SALES_CASH_REGISTER_VIEW_ALL'));
+  const canViewDebts = useAuthStore((s) => s.hasPermission('OIL_SALES_DEBTS_VIEW'));
   const [registerId, setRegisterId] = useState('');
   const q = useQuery({
     queryKey: ['oil-sales-dashboard', registerId],
@@ -180,11 +196,38 @@ export default function SalesDashboardPage() {
           emphasize
         />
         <StatCard
-          label="إجمالي المساعدات اليوم"
-          value={d ? formatNumber(d.today.assistance, 0) : '—'}
+          label="نقد محصّل اليوم"
+          value={d ? formatNumber(d.today.cashReceived ?? d.today.net, 0) : '—'}
           unit="د.ج"
         />
       </div>
+
+      {canViewDebts && d?.debt ? (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="إجمالي الديون"
+            value={formatNumber(d.debt.totalDebt, 0)}
+            unit="د.ج"
+          />
+          <StatCard label="عدد المدينين" value={String(d.debt.debtorsCount)} />
+          <StatCard
+            label="محصّل ديون اليوم"
+            value={formatNumber(d.debt.collectedToday, 0)}
+            unit="د.ج"
+          />
+          <StatCard
+            label="دين جديد اليوم"
+            value={formatNumber(d.debt.newDebtToday, 0)}
+            unit="د.ج"
+          />
+          <Link
+            href="/sales/debts"
+            className="sm:col-span-2 lg:col-span-4 text-sm font-bold text-amber-800 underline"
+          >
+            فتح صفحة الديون →
+          </Link>
+        </div>
+      ) : null}
 
       {OIL_SOURCES.map((source) => (
         <SourceStockSection

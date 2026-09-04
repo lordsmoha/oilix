@@ -75,6 +75,7 @@ export default function NewSalePage() {
   const canAssistPerLitre = useAuthStore((s) =>
     s.hasPermission('OIL_SALES_ASSISTANCE_PER_LITRE'),
   );
+  const canAllowDebt = useAuthStore((s) => s.hasPermission('OIL_SALES_SALES_ALLOW_DEBT'));
 
   const [oilSource, setOilSource] = useState<OilSourceValue>('STORED');
   const [oilType, setOilType] = useState<OilTypeValue>('GREEN');
@@ -98,6 +99,8 @@ export default function NewSalePage() {
   const [showNewCustomer, setShowNewCustomer] = useState(false);
   const [newName, setNewName] = useState('');
   const [newPhone, setNewPhone] = useState('');
+  const [paymentMode, setPaymentMode] = useState<'full' | 'partial' | 'later'>('full');
+  const [amountPaidNow, setAmountPaidNow] = useState('');
   const [newAddress, setNewAddress] = useState('');
   const [oilPanelOpen, setOilPanelOpen] = useState(false);
   const uid = useId();
@@ -266,6 +269,29 @@ export default function NewSalePage() {
     assistancePerLitre: canAssistPerLitre ? Number(assistancePerLitre || 0) : 0,
   });
 
+  useEffect(() => {
+    if (!preview) {
+      setAmountPaidNow('');
+      return;
+    }
+    if (!canAllowDebt || paymentMode === 'full') {
+      setAmountPaidNow(String(preview.finalAmount));
+    } else if (paymentMode === 'later') {
+      setAmountPaidNow('0');
+    }
+  }, [preview?.finalAmount, paymentMode, canAllowDebt]);
+
+  const paidNow = preview
+    ? !canAllowDebt
+      ? preview.finalAmount
+      : paymentMode === 'full'
+        ? preview.finalAmount
+        : paymentMode === 'later'
+          ? 0
+          : Math.min(Math.max(0, Number(amountPaidNow || 0)), preview.finalAmount)
+    : 0;
+  const remainingDebt = preview ? Math.max(0, preview.finalAmount - paidNow) : 0;
+
   const oilNeeded = useMemo(
     () =>
       composedLines
@@ -370,6 +396,7 @@ export default function NewSalePage() {
           })),
           assistanceFixed: canAssistFixed ? Number(assistanceFixed || 0) : 0,
           assistancePerLitre: canAssistPerLitre ? Number(assistancePerLitre || 0) : 0,
+          amountPaid: paidNow,
           notes: notes.trim() || undefined,
           overrideStock,
           overrideContainerStock,
@@ -381,6 +408,8 @@ export default function NewSalePage() {
       void qc.invalidateQueries({ queryKey: ['oil-sales-stock'] });
       void qc.invalidateQueries({ queryKey: ['oil-containers'] });
       void qc.invalidateQueries({ queryKey: ['oil-sales-list'] });
+      void qc.invalidateQueries({ queryKey: ['oil-debts'] });
+      void qc.invalidateQueries({ queryKey: ['oil-debts-summary'] });
       if (print) openOilSaleReceipt(sale.id, { autoPrint: true });
       setLines([]);
       setLooseQty('');
@@ -390,6 +419,8 @@ export default function NewSalePage() {
       setNotes('');
       setOverrideStock(false);
       setOverrideContainerStock(false);
+      setPaymentMode('full');
+      setAmountPaidNow('');
     },
     onError: (e: { response?: { data?: { message?: string | string[] } } }) => {
       const msg = e.response?.data?.message;
@@ -412,6 +443,18 @@ export default function NewSalePage() {
       toast.error('الكمية تتجاوز المخزون المتوفر');
       return;
     }
+    if (remainingDebt > 0 && !canAllowDebt) {
+      toast.error('ليس لديك صلاحية البيع بالدين');
+      return;
+    }
+    if (remainingDebt > 0 && !customerId) {
+      toast.error('البيع بالدين يتطلب اختيار زبون مسجّل');
+      return;
+    }
+    if (paymentMode === 'partial' && !(Number(amountPaidNow) >= 0)) {
+      toast.error('أدخل المبلغ المدفوع');
+      return;
+    }
     createSale.mutate(print);
   }
 
@@ -424,6 +467,8 @@ export default function NewSalePage() {
     setNotes('');
     setOverrideStock(false);
     setOverrideContainerStock(false);
+    setPaymentMode('full');
+    setAmountPaidNow('');
   }
 
   if ((!canWrite && !canSellContainers) || readOnly) {
@@ -996,6 +1041,69 @@ export default function NewSalePage() {
               </p>
             )}
           </section>
+
+          {preview ? (
+            <section className="space-y-3 rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-4">
+              <h3 className="text-sm font-black">الدفع</h3>
+              {canAllowDebt ? (
+                <div className="grid grid-cols-3 gap-2">
+                  {(
+                    [
+                      ['full', 'دفع كامل'],
+                      ['partial', 'دفع جزئي'],
+                      ['later', 'الدفع لاحقاً'],
+                    ] as const
+                  ).map(([mode, label]) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setPaymentMode(mode)}
+                      className={cn(
+                        'rounded-xl border px-2 py-2.5 text-sm font-bold',
+                        paymentMode === mode
+                          ? 'border-amber-700 bg-amber-50 text-amber-900'
+                          : 'border-[var(--app-border)]',
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-[var(--app-text-dim)]">
+                  البيع نقداً بالكامل (لا صلاحية دين)
+                </p>
+              )}
+              {canAllowDebt && paymentMode === 'partial' ? (
+                <Input
+                  label="المبلغ المدفوع الآن"
+                  inputMode="decimal"
+                  value={amountPaidNow}
+                  onChange={(e) => setAmountPaidNow(e.target.value)}
+                />
+              ) : null}
+              <dl className="space-y-1.5 text-sm">
+                <SummaryLine label="الصافي" value={`${formatNumber(preview.finalAmount, 0)} د.ج`} />
+                <SummaryLine label="المدفوع الآن" value={`${formatNumber(paidNow, 0)} د.ج`} />
+                <div
+                  className={cn(
+                    'mt-2 flex items-center justify-between rounded-xl border px-4 py-3',
+                    remainingDebt > 0
+                      ? 'border-amber-600/30 bg-amber-50 dark:bg-amber-950/30'
+                      : 'border-emerald-600/25 bg-emerald-50 dark:bg-emerald-950/30',
+                  )}
+                >
+                  <span className="font-black">المتبقي على الزبون</span>
+                  <span className="text-xl font-black tabular-nums">
+                    {formatNumber(remainingDebt, 0)} د.ج
+                  </span>
+                </div>
+              </dl>
+              {remainingDebt > 0 && !customerId ? (
+                <p className="text-sm font-bold text-red-700">اختر زبوناً مسجّلاً لتسجيل الدين</p>
+              ) : null}
+            </section>
+          ) : null}
 
           <Input label="ملاحظات" value={notes} onChange={(e) => setNotes(e.target.value)} />
 

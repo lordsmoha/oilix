@@ -23,15 +23,24 @@ type Sale = {
   grossAmount: string | number;
   totalAssistance: string | number;
   finalAmount: string | number;
+  amountPaid?: string | number;
+  remainingAmount?: string | number;
+  paymentStatus?: string;
   status: string;
   saleDate: string;
   createdAt: string;
   customer: { id: string; name: string; phone?: string | null };
-    createdBy?: { username: string; firstName?: string | null };
-    deviceCode?: string | null;
-    cashRegisterName?: string | null;
-    cashRegisterCode?: string | null;
-  };
+  createdBy?: { username: string; firstName?: string | null };
+  deviceCode?: string | null;
+  cashRegisterName?: string | null;
+  cashRegisterCode?: string | null;
+};
+
+function paymentStatusLabel(s?: string) {
+  if (s === 'PARTIALLY_PAID') return 'جزئي';
+  if (s === 'UNPAID') return 'غير مسدد';
+  return 'مسدد';
+}
 
 export default function SalesHistoryPage() {
   const qc = useQueryClient();
@@ -45,9 +54,10 @@ export default function SalesHistoryPage() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [status, setStatus] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState('');
 
   const listQ = useQuery({
-    queryKey: ['oil-sales-list', q, oilSource, oilType, from, to, status],
+    queryKey: ['oil-sales-list', q, oilSource, oilType, from, to, status, paymentStatus],
     queryFn: async () =>
       (
         await api.get<{ items: Sale[] }>('/oil-sales/sales', {
@@ -58,6 +68,7 @@ export default function SalesHistoryPage() {
             from: from || undefined,
             to: to || undefined,
             status: status || undefined,
+            paymentStatus: paymentStatus || undefined,
             limit: 100,
           },
         })
@@ -81,7 +92,7 @@ export default function SalesHistoryPage() {
     <div className="mx-auto max-w-6xl space-y-4">
       <h1 className="text-2xl font-black">سجل المبيعات</h1>
 
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-7">
         <Input label="بحث" value={q} onChange={(e) => setQ(e.target.value)} placeholder="رقم، زبون…" />
         <label className="block text-sm">
           <span className="mb-1 block font-semibold text-[var(--app-text-muted)]">المصدر</span>
@@ -127,10 +138,23 @@ export default function SalesHistoryPage() {
             <option value="CANCELLED">ملغى</option>
           </select>
         </label>
+        <label className="block text-sm">
+          <span className="mb-1 block font-semibold text-[var(--app-text-muted)]">الدفع</span>
+          <select
+            className="w-full rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2.5"
+            value={paymentStatus}
+            onChange={(e) => setPaymentStatus(e.target.value)}
+          >
+            <option value="">الكل</option>
+            <option value="PAID">مسدد</option>
+            <option value="PARTIALLY_PAID">جزئي</option>
+            <option value="UNPAID">غير مسدد</option>
+          </select>
+        </label>
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)]">
-        <table className="w-full min-w-[900px] text-sm">
+        <table className="w-full min-w-[1100px] text-sm">
           <thead className="bg-[var(--app-bg-muted)] text-[var(--app-text-dim)]">
             <tr>
               <th className="px-3 py-2.5 text-right font-bold">الوصل</th>
@@ -141,9 +165,10 @@ export default function SalesHistoryPage() {
               <th className="px-3 py-2.5 text-right font-bold">المصدر</th>
               <th className="px-3 py-2.5 text-right font-bold">النوع</th>
               <th className="px-3 py-2.5 text-right font-bold">الكمية</th>
-              <th className="px-3 py-2.5 text-right font-bold">الإجمالي</th>
-              <th className="px-3 py-2.5 text-right font-bold">المساعدة</th>
               <th className="px-3 py-2.5 text-right font-bold">الصافي</th>
+              <th className="px-3 py-2.5 text-right font-bold">مدفوع</th>
+              <th className="px-3 py-2.5 text-right font-bold">متبقي</th>
+              <th className="px-3 py-2.5 text-right font-bold">الدفع</th>
               <th className="px-3 py-2.5 text-right font-bold">الحالة</th>
               <th className="px-3 py-2.5 text-right font-bold">إجراءات</th>
             </tr>
@@ -152,6 +177,7 @@ export default function SalesHistoryPage() {
             {(listQ.data ?? []).map((s) => {
               const src = s.oilSource ? oilSourceMeta(s.oilSource) : null;
               const m = oilMeta(s.oilType);
+              const remaining = Number(s.remainingAmount ?? 0);
               return (
                 <tr key={s.id} className="border-t border-[var(--app-border)]">
                   <td className="px-3 py-2 font-black">
@@ -168,10 +194,31 @@ export default function SalesHistoryPage() {
                     {m.emoji} {m.label}
                   </td>
                   <td className="px-3 py-2 tabular-nums">{formatNumber(Number(s.quantityL), 1)}</td>
-                  <td className="px-3 py-2 tabular-nums">{formatNumber(Number(s.grossAmount), 0)}</td>
-                  <td className="px-3 py-2 tabular-nums">{formatNumber(Number(s.totalAssistance), 0)}</td>
                   <td className="px-3 py-2 font-black tabular-nums">
                     {formatNumber(Number(s.finalAmount), 0)}
+                  </td>
+                  <td className="px-3 py-2 tabular-nums">
+                    {formatNumber(Number(s.amountPaid ?? s.finalAmount), 0)}
+                  </td>
+                  <td
+                    className={cn(
+                      'px-3 py-2 font-bold tabular-nums',
+                      remaining > 0 ? 'text-amber-800' : '',
+                    )}
+                  >
+                    {formatNumber(remaining, 0)}
+                  </td>
+                  <td className="px-3 py-2">
+                    <span
+                      className={cn(
+                        'rounded-full px-2 py-0.5 text-xs font-bold',
+                        remaining > 0
+                          ? 'bg-amber-100 text-amber-900'
+                          : 'bg-emerald-100 text-emerald-800',
+                      )}
+                    >
+                      {paymentStatusLabel(s.paymentStatus)}
+                    </span>
                   </td>
                   <td className="px-3 py-2">
                     <span

@@ -59,6 +59,12 @@ enum Permission {
   OIL_SALES_SALES_DELETE
   OIL_SALES_SALES_REPRINT
   OIL_SALES_SALES_CHANGE_PRICE
+  OIL_SALES_SALES_ALLOW_DEBT
+  OIL_SALES_DEBTS_VIEW
+  OIL_SALES_DEBTS_RECORD_PAYMENT
+  OIL_SALES_DEBTS_VIEW_ALL
+  OIL_SALES_DEBTS_ADJUST
+  OIL_SALES_DEBTS_EXPORT
   OIL_SALES_ASSISTANCE_FIXED
   OIL_SALES_ASSISTANCE_PERCENT
   OIL_SALES_ASSISTANCE_PER_LITRE
@@ -132,6 +138,20 @@ enum OilStockMovementType {
 enum OilSaleStatus {
   COMPLETED
   CANCELLED
+}
+
+enum OilSalePaymentStatus {
+  PAID
+  PARTIALLY_PAID
+  UNPAID
+}
+
+enum OilCustomerLedgerType {
+  SALE_DEBT
+  PAYMENT
+  REFUND
+  SALE_CANCELLATION
+  DEBT_ADJUSTMENT
 }
 
 enum OilSaleLineKind {
@@ -219,6 +239,8 @@ model User {
   oilCustomersCreated OilSaleCustomer[] @relation("OilCustomerCreatedBy")
   oilContainerMovements OilContainerStockMovement[]
   oilContainerCounts OilContainerInventoryCount[]
+  oilSalePayments OilSalePayment[]
+  oilCustomerLedgerEntries OilCustomerLedgerEntry[]
   devicesApproved Device[] @relation("DeviceApprovedBy")
   cashSessionsOpened CashRegisterSession[] @relation("CashSessionOpenedBy")
   cashSessionsClosed CashRegisterSession[] @relation("CashSessionClosedBy")
@@ -272,6 +294,8 @@ model Season {
   oilStockMovements OilStockMovement[]
   oilInventoryCounts OilInventoryCount[]
   oilSales     OilSale[]
+  oilSalePayments OilSalePayment[]
+  oilCustomerLedgerEntries OilCustomerLedgerEntry[]
   oilContainerBalances OilContainerStockBalance[]
   oilContainerMovements OilContainerStockMovement[]
   oilContainerCounts OilContainerInventoryCount[]
@@ -502,6 +526,8 @@ model OilSaleCustomer {
   createdById String?   @map("created_by_id")
   createdBy   User?     @relation("OilCustomerCreatedBy", fields: [createdById], references: [id])
   sales       OilSale[]
+  payments    OilSalePayment[]
+  ledgerEntries OilCustomerLedgerEntry[]
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
   deletedAt   DateTime? @map("deleted_at")
@@ -607,6 +633,9 @@ model OilSale {
   assistancePerLitreTotal  Decimal        @default(0) @map("assistance_per_litre_total") @db.Decimal(14, 2)
   totalAssistance          Decimal        @default(0) @map("total_assistance") @db.Decimal(14, 2)
   finalAmount              Decimal        @map("final_amount") @db.Decimal(14, 2)
+  amountPaid               Decimal        @default(0) @map("amount_paid") @db.Decimal(14, 2)
+  remainingAmount          Decimal        @default(0) @map("remaining_amount") @db.Decimal(14, 2)
+  paymentStatus            OilSalePaymentStatus @default(PAID) @map("payment_status")
   status                   OilSaleStatus  @default(COMPLETED)
   notes                    String?
   overrideStock            Boolean        @default(false) @map("override_stock")
@@ -632,6 +661,8 @@ model OilSale {
   movements                OilStockMovement[]
   containerMovements       OilContainerStockMovement[]
   items                    OilSaleItem[]
+  paymentAllocations       OilSalePaymentAllocation[]
+  ledgerEntries            OilCustomerLedgerEntry[]
   createdAt                DateTime       @default(now()) @map("created_at")
   updatedAt                DateTime       @updatedAt @map("updated_at")
 
@@ -641,12 +672,91 @@ model OilSale {
   @@index([seasonId, saleDate])
   @@index([customerId])
   @@index([status])
+  @@index([paymentStatus])
   @@index([createdById])
   @@index([deviceId])
   @@index([cashRegisterId])
   @@index([cashSessionId])
   @@index([receiptNumber])
   @@map("oil_sales")
+}
+
+/** تسديد دين / دفعة على بيع زيت */
+model OilSalePayment {
+  id                 String   @id @default(uuid())
+  seasonId           String   @map("season_id")
+  season             Season   @relation(fields: [seasonId], references: [id])
+  receiptNumber      Int      @map("receipt_number")
+  customerId         String   @map("customer_id")
+  customer           OilSaleCustomer @relation(fields: [customerId], references: [id])
+  amount             Decimal  @db.Decimal(14, 2)
+  paymentMethod      String   @default("CASH") @map("payment_method")
+  reference          String?
+  notes              String?
+  userId             String   @map("user_id")
+  user               User     @relation(fields: [userId], references: [id])
+  deviceId           String?  @map("device_id")
+  device             Device?  @relation(fields: [deviceId], references: [id])
+  cashRegisterId     String?  @map("cash_register_id")
+  cashRegister       CashRegister? @relation(fields: [cashRegisterId], references: [id])
+  cashSessionId      String?  @map("cash_session_id")
+  cashSession        CashRegisterSession? @relation(fields: [cashSessionId], references: [id])
+  deviceCode         String?  @map("device_code")
+  deviceName         String?  @map("device_name")
+  cashRegisterCode   String?  @map("cash_register_code")
+  cashRegisterName   String?  @map("cash_register_name")
+  allocations        OilSalePaymentAllocation[]
+  ledgerEntries      OilCustomerLedgerEntry[]
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  @@unique([seasonId, receiptNumber])
+  @@index([seasonId, customerId, createdAt])
+  @@index([userId])
+  @@index([cashSessionId])
+  @@map("oil_sale_payments")
+}
+
+model OilSalePaymentAllocation {
+  id        String         @id @default(uuid())
+  paymentId String         @map("payment_id")
+  payment   OilSalePayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  saleId    String         @map("sale_id")
+  sale      OilSale        @relation(fields: [saleId], references: [id])
+  amount    Decimal        @db.Decimal(14, 2)
+  createdAt DateTime       @default(now()) @map("created_at")
+
+  @@index([paymentId])
+  @@index([saleId])
+  @@map("oil_sale_payment_allocations")
+}
+
+model OilCustomerLedgerEntry {
+  id           String                 @id @default(uuid())
+  seasonId     String                 @map("season_id")
+  season       Season                 @relation(fields: [seasonId], references: [id])
+  customerId   String                 @map("customer_id")
+  customer     OilSaleCustomer        @relation(fields: [customerId], references: [id])
+  type         OilCustomerLedgerType
+  saleId       String?                @map("sale_id")
+  sale         OilSale?               @relation(fields: [saleId], references: [id])
+  paymentId    String?                @map("payment_id")
+  payment      OilSalePayment?        @relation(fields: [paymentId], references: [id])
+  debit        Decimal                @default(0) @db.Decimal(14, 2)
+  credit       Decimal                @default(0) @db.Decimal(14, 2)
+  balanceAfter Decimal                @map("balance_after") @db.Decimal(14, 2)
+  reference    String?
+  notes        String?
+  userId       String                 @map("user_id")
+  user         User                   @relation(fields: [userId], references: [id])
+  deviceId     String?                @map("device_id")
+  device       Device?                @relation(fields: [deviceId], references: [id])
+  createdAt    DateTime               @default(now()) @map("created_at")
+
+  @@index([seasonId, customerId, createdAt])
+  @@index([saleId])
+  @@index([paymentId])
+  @@index([userId])
+  @@map("oil_customer_ledger_entries")
 }
 
 /** منتج التعبئة / الضلف — مخزون مستقل بالقطعة */
@@ -786,6 +896,7 @@ model CashRegister {
   devices   Device[]
   sessions  CashRegisterSession[]
   sales     OilSale[]
+  oilSalePayments OilSalePayment[]
   createdAt DateTime               @default(now()) @map("created_at")
   updatedAt DateTime               @updatedAt @map("updated_at")
 
@@ -810,6 +921,8 @@ model Device {
   cashRegister     CashRegister?    @relation(fields: [cashRegisterId], references: [id])
   sessions         CashRegisterSession[]
   oilSales         OilSale[]
+  oilSalePayments  OilSalePayment[]
+  oilCustomerLedgerEntries OilCustomerLedgerEntry[]
   oliveEntries     OliveEntry[]
   pressingRecords  PressingRecord[]
   filtrationRecords FiltrationRecord[]
@@ -852,6 +965,7 @@ model CashRegisterSession {
   openingNote    String?           @map("opening_note")
   closingNote    String?           @map("closing_note")
   sales          OilSale[]
+  oilSalePayments OilSalePayment[]
   createdAt      DateTime          @default(now()) @map("created_at")
   updatedAt      DateTime          @updatedAt @map("updated_at")
 

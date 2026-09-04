@@ -1,16 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import { use } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { FormEvent, use, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { Printer } from 'lucide-react';
+import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { oilMeta, oilSourceMeta } from '@/lib/sales-nav';
 import { formatNumber, formatDateTimeDz } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/lib/auth-store';
 import { openOilSaleReceipt } from '@/lib/oil-sale-receipt';
+import { useSeasonReadOnly } from '@/hooks/use-season-read-only';
 
 type SaleDetail = {
   id: string;
@@ -27,6 +30,9 @@ type SaleDetail = {
   assistancePerLitreTotal?: string | number;
   totalAssistance: string | number;
   finalAmount: string | number;
+  amountPaid?: string | number;
+  remainingAmount?: string | number;
+  paymentStatus?: string;
   status: string;
   saleDate: string;
   saleTime: string;
@@ -34,13 +40,23 @@ type SaleDetail = {
   notes?: string | null;
   customer: { id: string; name: string; phone?: string | null };
   createdBy?: { username: string; firstName?: string | null; lastName?: string | null };
-    items?: Array<{
-      kind: 'CONTAINER' | 'LOOSE' | 'CONTAINER_ONLY';
-      containerName?: string | null;
-      containerCount?: number | null;
-      quantityL: string | number;
-      lineGross: string | number;
-    }>;
+  items?: Array<{
+    kind: 'CONTAINER' | 'LOOSE' | 'CONTAINER_ONLY';
+    containerName?: string | null;
+    containerCount?: number | null;
+    quantityL: string | number;
+    lineGross: string | number;
+  }>;
+  paymentAllocations?: Array<{
+    amount: string | number;
+    createdAt: string;
+    payment: {
+      id: string;
+      receiptNumber: number;
+      cashRegisterName?: string | null;
+      user?: { username: string; firstName?: string | null };
+    };
+  }>;
 };
 
 export default function SaleDetailPage({
@@ -49,14 +65,38 @@ export default function SaleDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const qc = useQueryClient();
+  const { readOnly } = useSeasonReadOnly();
   const canPrint = useAuthStore((s) => s.hasPermission('OIL_SALES_PRINT_RECEIPT'));
   const canReprint = useAuthStore((s) => s.hasPermission('OIL_SALES_SALES_REPRINT'));
+  const canPay = useAuthStore((s) => s.hasPermission('OIL_SALES_DEBTS_RECORD_PAYMENT'));
   const canOpenReceipt = canPrint || canReprint;
+  const [payAmount, setPayAmount] = useState('');
 
   const q = useQuery({
     queryKey: ['oil-sale', id],
     queryFn: async () => (await api.get<SaleDetail>(`/oil-sales/sales/${id}`)).data,
     retry: false,
+  });
+
+  const payMut = useMutation({
+    mutationFn: async () =>
+      (
+        await api.post(`/oil-sales/sales/${id}/pay`, {
+          amount: Number(payAmount),
+        })
+      ).data as { id: string; remainingDebt: number },
+    onSuccess: (r) => {
+      toast.success(`تم التسديد — المتبقي الإجمالي ${formatNumber(r.remainingDebt, 0)} د.ج`);
+      setPayAmount('');
+      void qc.invalidateQueries({ queryKey: ['oil-sale', id] });
+      void qc.invalidateQueries({ queryKey: ['oil-sales-list'] });
+      void qc.invalidateQueries({ queryKey: ['oil-debts'] });
+      void qc.invalidateQueries({ queryKey: ['oil-debts-summary'] });
+      if (r.id) window.open(`/oil-debt-payment/${r.id}?print=1`, '_blank', 'noopener');
+    },
+    onError: (e: { response?: { data?: { message?: string } } }) =>
+      toast.error(e.response?.data?.message || 'تعذر التسديد'),
   });
 
   const status = axios.isAxiosError(q.error) ? q.error.response?.status : undefined;
@@ -94,6 +134,13 @@ export default function SaleDetailPage({
     [s.createdBy?.firstName, s.createdBy?.lastName].filter(Boolean).join(' ') ||
     s.createdBy?.username ||
     '—';
+  const remaining = Number(s.remainingAmount ?? 0);
+  const paid = Number(s.amountPaid ?? s.finalAmount);
+
+  function onPay(e: FormEvent) {
+    e.preventDefault();
+    payMut.mutate();
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
@@ -117,10 +164,18 @@ export default function SaleDetailPage({
         ) : null}
       </div>
 
-      <div className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-5 space-y-3 text-sm">
+      <div className="space-y-3 rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-5 text-sm">
         <p>
           <span className="text-[var(--app-text-dim)]">الزبون: </span>
           <strong>{s.customer.name}</strong>
+          {s.customer.id ? (
+            <>
+              {' · '}
+              <Link href={`/sales/debts/${s.customer.id}`} className="text-amber-800 underline">
+                حساب الدين
+              </Link>
+            </>
+          ) : null}
         </p>
         {src && m ? (
           <p>
@@ -174,8 +229,56 @@ export default function SaleDetailPage({
         ) : null}
         <p>إجمالي المساعدات: {formatNumber(Number(s.totalAssistance), 0)} د.ج</p>
         <p className="text-lg font-black">الصافي: {formatNumber(Number(s.finalAmount), 0)} د.ج</p>
+        <p>المدفوع: {formatNumber(paid, 0)} د.ج</p>
+        <p className={remaining > 0 ? 'font-black text-amber-800' : ''}>
+          المتبقي: {formatNumber(remaining, 0)} د.ج
+        </p>
         <p className="text-xs text-[var(--app-text-dim)]">العامل: {operator}</p>
       </div>
+
+      {canPay && !readOnly && s.status === 'COMPLETED' && remaining > 0 ? (
+        <form
+          onSubmit={onPay}
+          className="space-y-3 rounded-2xl border border-amber-700/30 bg-amber-50 p-4 dark:bg-amber-950/20"
+        >
+          <h2 className="font-black">تسديد المتبقي</h2>
+          <Input
+            label="المبلغ"
+            inputMode="decimal"
+            value={payAmount}
+            onChange={(e) => setPayAmount(e.target.value)}
+            required
+          />
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => setPayAmount(String(remaining))}>
+              تسديد كامل المتبقي
+            </Button>
+            <Button type="submit" loading={payMut.isPending} className="bg-amber-700 hover:bg-amber-800">
+              تسجيل الدفع
+            </Button>
+          </div>
+        </form>
+      ) : null}
+
+      {(s.paymentAllocations ?? []).length > 0 ? (
+        <div className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-4">
+          <h2 className="mb-2 font-black">تسديدات لاحقة</h2>
+          <ul className="divide-y divide-[var(--app-border)] text-sm">
+            {s.paymentAllocations!.map((a, i) => (
+              <li key={i} className="flex justify-between gap-2 py-2">
+                <div>
+                  <p className="font-bold">PAY-{String(a.payment.receiptNumber).padStart(6, '0')}</p>
+                  <p className="text-xs text-[var(--app-text-dim)]">
+                    {formatDateTimeDz(a.createdAt)}
+                    {a.payment.cashRegisterName ? ` · ${a.payment.cashRegisterName}` : ''}
+                  </p>
+                </div>
+                <span className="font-black tabular-nums">{formatNumber(Number(a.amount), 0)} د.ج</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }

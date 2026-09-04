@@ -4,6 +4,7 @@ import {
   ClipboardList,
   Computer,
   Droplets,
+  HandCoins,
   Landmark,
   LayoutDashboard,
   Package,
@@ -151,6 +152,13 @@ export const SALES_NAV: SalesNavItem[] = [
     icon: Users,
     permission: 'OIL_SALES_CUSTOMERS_VIEW',
     match: ['/sales/customers'],
+  },
+  {
+    href: '/sales/debts',
+    label: 'الديون',
+    icon: HandCoins,
+    permission: 'OIL_SALES_DEBTS_VIEW',
+    match: ['/sales/debts'],
   },
   {
     href: '/sales/reports',
