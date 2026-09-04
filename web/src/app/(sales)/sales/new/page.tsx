@@ -43,7 +43,6 @@ export default function NewSalePage() {
     s.hasPermission('OIL_SALES_CONTAINERS_CHANGE_PRICE'),
   );
   const canAssistFixed = useAuthStore((s) => s.hasPermission('OIL_SALES_ASSISTANCE_FIXED'));
-  const canAssistPercent = useAuthStore((s) => s.hasPermission('OIL_SALES_ASSISTANCE_PERCENT'));
   const canAssistPerLitre = useAuthStore((s) =>
     s.hasPermission('OIL_SALES_ASSISTANCE_PER_LITRE'),
   );
@@ -62,7 +61,6 @@ export default function NewSalePage() {
   const [unitPrice, setUnitPrice] = useState('');
   const [containerSellPrice, setContainerSellPrice] = useState('');
   const [assistanceFixed, setAssistanceFixed] = useState('0');
-  const [assistancePercent, setAssistancePercent] = useState('0');
   const [assistancePerLitre, setAssistancePerLitre] = useState('0');
   const [notes, setNotes] = useState('');
   const [overrideStock, setOverrideStock] = useState(false);
@@ -147,7 +145,6 @@ export default function NewSalePage() {
   });
   const preview = previewSaleFromLines(pricedLines, {
     assistanceFixed: canAssistFixed ? Number(assistanceFixed || 0) : 0,
-    assistancePercent: canAssistPercent ? Number(assistancePercent || 0) : 0,
     assistancePerLitre: canAssistPerLitre ? Number(assistancePerLitre || 0) : 0,
   });
 
@@ -262,7 +259,6 @@ export default function NewSalePage() {
             containerPrice: l.kind === 'CONTAINER_ONLY' ? l.containerPrice ?? l.unitPrice : l.containerPrice,
           })),
           assistanceFixed: canAssistFixed ? Number(assistanceFixed || 0) : 0,
-          assistancePercent: canAssistPercent ? Number(assistancePercent || 0) : 0,
           assistancePerLitre: canAssistPerLitre ? Number(assistancePerLitre || 0) : 0,
           notes: notes.trim() || undefined,
           overrideStock,
@@ -650,14 +646,6 @@ export default function NewSalePage() {
                 ) : null}
               </div>
             ) : null}
-            {canAssistPercent ? (
-              <Input
-                label="مساعدة نسبة %"
-                inputMode="decimal"
-                value={assistancePercent}
-                onChange={(e) => setAssistancePercent(e.target.value)}
-              />
-            ) : null}
             {canAssistFixed ? (
               <Input
                 label="مساعدة ثابتة (د.ج)"
@@ -695,12 +683,6 @@ export default function NewSalePage() {
                 <Line
                   label="مساعدة اللتر"
                   value={`− ${formatNumber(preview.assistancePerLitreTotal, 0)} د.ج`}
-                />
-              ) : null}
-              {canAssistPercent ? (
-                <Line
-                  label="المساعدة بالنسبة"
-                  value={`− ${formatNumber(preview.assistancePercentAmount, 0)} د.ج`}
                 />
               ) : null}
               {canAssistFixed ? (

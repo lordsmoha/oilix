@@ -66,7 +66,6 @@ export function OilSaleReceiptDocument({ data }: { data: OilSaleReceiptPayload }
     [sale.createdBy?.firstName, sale.createdBy?.lastName].filter(Boolean).join(' ') ||
     sale.createdBy?.username ||
     '—';
-  const assistPct = Number(sale.assistancePercent);
   const assistPerLitre = Number(sale.assistancePerLitre ?? 0);
   const assistPerLitreTotal = Number(sale.assistancePerLitreTotal ?? 0);
   const hasOil = Number(sale.quantityL) > 0;
@@ -178,12 +177,6 @@ export function OilSaleReceiptDocument({ data }: { data: OilSaleReceiptPayload }
               <span className="tabular-nums">− {money(assistPerLitreTotal)} د.ج</span>
             </div>
           </>
-        ) : null}
-        {assistPct > 0 || Number(sale.assistancePercentAmount) > 0 ? (
-          <Row
-            label={`مساعدة ${assistPct}%`}
-            value={`− ${money(sale.assistancePercentAmount)} د.ج`}
-          />
         ) : null}
         {Number(sale.assistanceFixed) > 0 ? (
           <Row label="مساعدة ثابتة" value={`− ${money(sale.assistanceFixed)} د.ج`} />

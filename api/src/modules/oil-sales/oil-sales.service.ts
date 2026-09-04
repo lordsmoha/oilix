@@ -1004,11 +1004,13 @@ export class OilSalesService {
     const assistFixed = Number(dto.assistanceFixed ?? 0);
     const assistPct = Number(dto.assistancePercent ?? 0);
     const assistPerLitre = Number(dto.assistancePerLitre ?? 0);
+    if (assistPct > 0) {
+      throw new BadRequestException(
+        'المساعدة بالنسبة لم تعد مدعومة — استخدم مساعدة اللتر أو المساعدة الثابتة',
+      );
+    }
     if (assistFixed > 0 && !hasPermission(permissions, 'OIL_SALES_ASSISTANCE_FIXED', role)) {
       throw new ForbiddenException('ليس لديك صلاحية تطبيق مساعدة ثابتة');
-    }
-    if (assistPct > 0 && !hasPermission(permissions, 'OIL_SALES_ASSISTANCE_PERCENT', role)) {
-      throw new ForbiddenException('ليس لديك صلاحية تطبيق مساعدة بالنسبة');
     }
     if (
       assistPerLitre > 0 &&

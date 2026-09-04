@@ -169,12 +169,6 @@ export default function SaleDetailPage({
             {formatNumber(Number(s.assistancePerLitreTotal), 0)} د.ج
           </p>
         ) : null}
-        {Number(s.assistancePercentAmount) > 0 ? (
-          <p>
-            مساعدة نسبية ({formatNumber(Number(s.assistancePercent), 1)}%):{' '}
-            {formatNumber(Number(s.assistancePercentAmount), 0)} د.ج
-          </p>
-        ) : null}
         {Number(s.assistanceFixed) > 0 ? (
           <p>مساعدة ثابتة: {formatNumber(Number(s.assistanceFixed), 0)} د.ج</p>
         ) : null}

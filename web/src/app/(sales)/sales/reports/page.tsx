@@ -210,18 +210,13 @@ export default function SalesReportsPage() {
         />
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-3">
         <Card
           label="مساعدة اللتر"
           value={s ? formatNumber(s.assistancePerLitreTotal ?? 0, 0) : '—'}
           unit="د.ج"
         />
         <Card label="مساعدة ثابتة" value={s ? formatNumber(s.assistanceFixed, 0) : '—'} unit="د.ج" />
-        <Card
-          label="مساعدة نسبية"
-          value={s ? formatNumber(s.assistancePercentAmount, 0) : '—'}
-          unit="د.ج"
-        />
         <Card label="إجمالي المساعدات" value={s ? formatNumber(s.totalAssistance, 0) : '—'} unit="د.ج" />
       </div>
 
