@@ -361,10 +361,47 @@ Then Ctrl+F5 in the browser.
 
 ---
 
+## After a server reboot (502 Bad Gateway)
+
+Nginx starts automatically; **PM2 apps do not** unless startup was configured.
+
+```bash
+# Check
+pm2 status
+curl http://127.0.0.1:3000
+curl http://127.0.0.1:3001/api/v1/health
+```
+
+If apps are missing / errored:
+
+```bash
+cd /home/oilixu/oilix
+
+# Ensure API build exists
+ls api/dist/src/main.js || (cd api && npm run build && cd ..)
+
+# Start (or resurrect)
+pm2 delete all 2>/dev/null || true
+pm2 start ecosystem.config.cjs
+pm2 save
+
+# Enable auto-start on every reboot (run once)
+pm2 startup
+# Then paste & run the sudo command that pm2 prints, e.g.:
+# sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u oilixu --hp /home/oilixu
+
+pm2 status
+```
+
+Then open `http://192.168.1.249` again.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Fix |
 |---------|-----|
+| 502 after reboot | PM2 not auto-started → see section **After a server reboot** above |
 | Login fails, curl login works | Wrong web env or old build → fix `web/.env.local` → `npm run build` → `pm2 restart oilix-web` → Ctrl+F5 |
 | Toast: HTML بدل JSON | Nginx `/api/` not proxying to `:3001` → check `nginx -t` and `pm2 status` |
 | CORS in browser console | `CORS_ORIGIN` must include `http://192.168.1.249` → `pm2 restart oilix-api` |
@@ -372,6 +409,7 @@ Then Ctrl+F5 in the browser.
 | JWT_SECRET error on API start | Secret too short → `openssl rand -hex 32` → restart API |
 | DB connection failed | Password in `DATABASE_URL` must match PostgreSQL user |
 | `module not found` | Never copy Windows `node_modules` — run `npm ci` on Ubuntu |
+| PM2: `dist/main.js` not found | Use `dist/src/main.js` in `ecosystem.config.cjs` — then `pm2 delete all && pm2 start ecosystem.config.cjs` |
 | Page shows old version | Rebuild web + hard refresh |
 
 Useful commands:
@@ -380,6 +418,8 @@ Useful commands:
 pm2 status
 pm2 logs oilix-api
 pm2 logs oilix-web
+# API entry must be dist/src/main.js (not dist/main.js)
+ls /home/oilixu/oilix/api/dist/src/main.js
 sudo systemctl status nginx
 sudo systemctl status postgresql
 ss -tlnp | grep -E '80|3000|3001'
