@@ -274,7 +274,7 @@ export default function NewSalePage() {
       if (print) openOilSaleReceipt(sale.id, { autoPrint: true });
       setLines([]);
       setAssistanceFixed('0');
-      setAssistancePercent('0');
+      setAssistancePerLitre('0');
       setNotes('');
       setOverrideStock(false);
       setOverrideContainerStock(false);
