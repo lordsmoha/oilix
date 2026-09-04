@@ -56,6 +56,7 @@ export const PERMISSION_LABELS_AR: Record<Permission, string> = {
   OIL_SALES_SALES_CHANGE_PRICE: 'تغيير سعر البيع',
   OIL_SALES_ASSISTANCE_FIXED: 'مساعدة ثابتة',
   OIL_SALES_ASSISTANCE_PERCENT: 'مساعدة نسبة',
+  OIL_SALES_ASSISTANCE_PER_LITRE: 'مساعدة لكل لتر',
   OIL_SALES_ASSISTANCE_MODIFY: 'تعديل المساعدة',
   OIL_SALES_ASSISTANCE_TOTALS: 'عرض إجمالي المساعدات',
   OIL_SALES_STOCK_VIEW: 'عرض المخزون',

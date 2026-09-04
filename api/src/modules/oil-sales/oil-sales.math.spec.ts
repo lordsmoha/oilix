@@ -19,8 +19,52 @@ describe('oil-sales.math', () => {
       expect(r.grossAmount).toBe(20000);
       expect(r.assistancePercentAmount).toBe(1000);
       expect(r.assistanceFixed).toBe(500);
+      expect(r.assistancePerLitreTotal).toBe(0);
       expect(r.totalAssistance).toBe(1500);
       expect(r.finalAmount).toBe(18500);
+    });
+
+    it('Test 1: 20 L × 50 DZD/L assistance = 1,000 DZD', () => {
+      const r = computeSaleAmounts({
+        quantityL: 20,
+        unitPrice: 1000,
+        assistancePerLitre: 50,
+      });
+      expect(r.assistancePerLitreTotal).toBe(1000);
+      expect(r.totalAssistance).toBe(1000);
+      expect(r.finalAmount).toBe(19000);
+    });
+
+    it('Test 2: 30 L × 25 DZD/L assistance = 750 DZD', () => {
+      const r = computeSaleAmounts({
+        quantityL: 30,
+        unitPrice: 1000,
+        assistancePerLitre: 25,
+      });
+      expect(r.assistancePerLitreTotal).toBe(750);
+      expect(r.totalAssistance).toBe(750);
+    });
+
+    it('Test 5: combined per-litre + percent + fixed', () => {
+      const r = computeSaleAmounts({
+        quantityL: 20,
+        unitPrice: 1000,
+        assistancePerLitre: 50,
+        assistancePercent: 5,
+        assistanceFixed: 500,
+      });
+      expect(r.grossAmount).toBe(20000);
+      expect(r.assistancePerLitreTotal).toBe(1000);
+      expect(r.assistancePercentAmount).toBe(1000);
+      expect(r.assistanceFixed).toBe(500);
+      expect(r.totalAssistance).toBe(2500);
+      expect(r.finalAmount).toBe(17500);
+    });
+
+    it('rejects negative per-litre assistance', () => {
+      expect(() =>
+        computeSaleAmounts({ quantityL: 1, unitPrice: 100, assistancePerLitre: -1 }),
+      ).toThrow('INVALID_ASSISTANCE_PER_LITRE');
     });
 
     it('fixed only', () => {
@@ -102,6 +146,31 @@ describe('oil-sales.math', () => {
       ]);
       expect(r.quantityL).toBe(13.5);
       expect(r.grossAmount).toBe(13500);
+    });
+
+    it('Test 3: 4 × 5L oil × 50 DZD/L = 20 L → 1,000 DZD', () => {
+      const r = computeSaleFromLines(
+        [{ kind: 'CONTAINER', capacityL: 5, containerCount: 4, unitPrice: 1000 }],
+        { assistancePerLitre: 50 },
+      );
+      expect(r.quantityL).toBe(20);
+      expect(r.assistancePerLitreTotal).toBe(1000);
+      expect(r.finalAmount).toBe(19000);
+    });
+
+    it('Test 4: oil litres only — empty containers excluded from per-litre assistance', () => {
+      const r = computeSaleFromLines(
+        [
+          { kind: 'CONTAINER', capacityL: 5, containerCount: 4, unitPrice: 1000 },
+          { kind: 'CONTAINER_ONLY', containerCount: 5, unitPrice: 100, capacityL: 5 },
+        ],
+        { assistancePerLitre: 50 },
+      );
+      expect(r.quantityL).toBe(20);
+      expect(r.grossAmount).toBe(20500);
+      expect(r.assistancePerLitreTotal).toBe(1000);
+      expect(r.totalAssistance).toBe(1000);
+      expect(r.finalAmount).toBe(19500);
     });
 
     it('empty container sale: 4 × 150 DA = 600 DA, 0 oil litres', () => {

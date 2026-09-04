@@ -227,7 +227,7 @@ module.exports = {
     {
       name: 'oilix-api',
       cwd: '/home/oilixu/oilix/api',
-      script: 'dist/main.js',
+      script: 'dist/src/main.js',
       instances: 1,
       autorestart: true,
       env: {

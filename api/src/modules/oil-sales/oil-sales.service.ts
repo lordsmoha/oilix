@@ -943,6 +943,7 @@ export class OilSalesService {
         unitPrice: dto.unitPrice,
         assistanceFixed: dto.assistanceFixed,
         assistancePercent: dto.assistancePercent,
+        assistancePerLitre: dto.assistancePerLitre,
       });
     } catch (e) {
       mapCalcError(e);
@@ -951,7 +952,11 @@ export class OilSalesService {
 
   private previewFromItems(
     items: CreateOilSaleItemDto[],
-    assistance: { assistanceFixed?: number; assistancePercent?: number },
+    assistance: {
+      assistanceFixed?: number;
+      assistancePercent?: number;
+      assistancePerLitre?: number;
+    },
     containers?: Array<{ id: string; capacityL: Prisma.Decimal | number; unitPrice?: Prisma.Decimal | number | null }>,
   ) {
     const lines: SaleLineInput[] = items.map((it) => {
@@ -998,11 +1003,18 @@ export class OilSalesService {
 
     const assistFixed = Number(dto.assistanceFixed ?? 0);
     const assistPct = Number(dto.assistancePercent ?? 0);
+    const assistPerLitre = Number(dto.assistancePerLitre ?? 0);
     if (assistFixed > 0 && !hasPermission(permissions, 'OIL_SALES_ASSISTANCE_FIXED', role)) {
       throw new ForbiddenException('ليس لديك صلاحية تطبيق مساعدة ثابتة');
     }
     if (assistPct > 0 && !hasPermission(permissions, 'OIL_SALES_ASSISTANCE_PERCENT', role)) {
       throw new ForbiddenException('ليس لديك صلاحية تطبيق مساعدة بالنسبة');
+    }
+    if (
+      assistPerLitre > 0 &&
+      !hasPermission(permissions, 'OIL_SALES_ASSISTANCE_PER_LITRE', role)
+    ) {
+      throw new ForbiddenException('ليس لديك صلاحية تطبيق مساعدة لكل لتر');
     }
 
     const overrideOil = !!dto.overrideStock;
@@ -1141,7 +1153,11 @@ export class OilSalesService {
           pricingMode: p.it.pricingMode,
           containerPrice: p.it.containerPrice,
         })),
-        { assistanceFixed: assistFixed, assistancePercent: assistPct },
+        {
+          assistanceFixed: assistFixed,
+          assistancePercent: assistPct,
+          assistancePerLitre: assistPerLitre,
+        },
       );
     } catch (e) {
       mapCalcError(e);
@@ -1254,6 +1270,8 @@ export class OilSalesService {
           assistanceFixed: dec(amounts.assistanceFixed),
           assistancePercent: dec(amounts.assistancePercent),
           assistancePercentAmount: dec(amounts.assistancePercentAmount),
+          assistancePerLitre: dec(amounts.assistancePerLitre),
+          assistancePerLitreTotal: dec(amounts.assistancePerLitreTotal),
           totalAssistance: dec(amounts.totalAssistance),
           finalAmount: dec(amounts.finalAmount),
           notes: dto.notes?.trim() || null,
@@ -1769,6 +1787,7 @@ export class OilSalesService {
         a.gross += num(s.grossAmount);
         a.assistanceFixed += num(s.assistanceFixed);
         a.assistancePercentAmount += num(s.assistancePercentAmount);
+        a.assistancePerLitreTotal += num(s.assistancePerLitreTotal);
         a.totalAssistance += num(s.totalAssistance);
         a.net += num(s.finalAmount);
         return a;
@@ -1779,6 +1798,7 @@ export class OilSalesService {
         gross: 0,
         assistanceFixed: 0,
         assistancePercentAmount: 0,
+        assistancePerLitreTotal: 0,
         totalAssistance: 0,
         net: 0,
       },

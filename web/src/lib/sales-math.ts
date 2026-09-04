@@ -7,6 +7,8 @@ export type SalePreview = {
   assistanceFixed: number;
   assistancePercent: number;
   assistancePercentAmount: number;
+  assistancePerLitre: number;
+  assistancePerLitreTotal: number;
   totalAssistance: number;
   finalAmount: number;
 };
@@ -15,23 +17,28 @@ function roundMoney(n: number) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
-export function previewSaleAmounts(input: {
-  quantityL: number;
-  unitPrice: number;
+function finalizePreview(input: {
+  grossAmount: number;
+  oilQuantityL: number;
   assistanceFixed?: number;
   assistancePercent?: number;
+  assistancePerLitre?: number;
 }): SalePreview | null {
-  const quantityL = Number(input.quantityL);
-  const unitPrice = Number(input.unitPrice);
+  const grossAmount = roundMoney(Number(input.grossAmount));
+  const oilQuantityL = roundMoney(Number(input.oilQuantityL) || 0);
   const assistanceFixed = roundMoney(Number(input.assistanceFixed ?? 0));
   const assistancePercent = Number(input.assistancePercent ?? 0);
+  const assistancePerLitre = roundMoney(Number(input.assistancePerLitre ?? 0));
 
-  if (!(quantityL > 0) || !(unitPrice >= 0)) return null;
+  if (!(grossAmount >= 0) || oilQuantityL < 0) return null;
   if (assistanceFixed < 0 || assistancePercent < 0 || assistancePercent > 100) return null;
+  if (assistancePerLitre < 0) return null;
 
-  const grossAmount = roundMoney(quantityL * unitPrice);
+  const assistancePerLitreTotal = roundMoney(oilQuantityL * assistancePerLitre);
   const assistancePercentAmount = roundMoney((grossAmount * assistancePercent) / 100);
-  const totalAssistance = roundMoney(assistanceFixed + assistancePercentAmount);
+  const totalAssistance = roundMoney(
+    assistanceFixed + assistancePercentAmount + assistancePerLitreTotal,
+  );
   if (totalAssistance > grossAmount) return null;
   const finalAmount = roundMoney(grossAmount - totalAssistance);
   if (finalAmount < 0) return null;
@@ -41,9 +48,30 @@ export function previewSaleAmounts(input: {
     assistanceFixed,
     assistancePercent,
     assistancePercentAmount,
+    assistancePerLitre,
+    assistancePerLitreTotal,
     totalAssistance,
     finalAmount,
   };
+}
+
+export function previewSaleAmounts(input: {
+  quantityL: number;
+  unitPrice: number;
+  assistanceFixed?: number;
+  assistancePercent?: number;
+  assistancePerLitre?: number;
+}): SalePreview | null {
+  const quantityL = Number(input.quantityL);
+  const unitPrice = Number(input.unitPrice);
+  if (!(quantityL > 0) || !(unitPrice >= 0)) return null;
+  return finalizePreview({
+    grossAmount: roundMoney(quantityL * unitPrice),
+    oilQuantityL: quantityL,
+    assistanceFixed: input.assistanceFixed,
+    assistancePercent: input.assistancePercent,
+    assistancePerLitre: input.assistancePerLitre,
+  });
 }
 
 export type SaleLineKind = 'CONTAINER' | 'LOOSE' | 'CONTAINER_ONLY';
@@ -90,7 +118,11 @@ export function resolveDraftLine(line: DraftSaleLine) {
 
 export function previewSaleFromLines(
   lines: DraftSaleLine[],
-  assistance?: { assistanceFixed?: number; assistancePercent?: number },
+  assistance?: {
+    assistanceFixed?: number;
+    assistancePercent?: number;
+    assistancePerLitre?: number;
+  },
 ): (SalePreview & { quantityL: number }) | null {
   if (!lines.length) return null;
   const resolved = lines.map(resolveDraftLine);
@@ -98,13 +130,13 @@ export function previewSaleFromLines(
   const quantityL = roundMoney(resolved.reduce((s, r) => s + (r?.quantityL ?? 0), 0));
   const grossAmount = roundMoney(resolved.reduce((s, r) => s + (r?.lineGross ?? 0), 0));
   if (!(grossAmount > 0) && !(quantityL > 0)) return null;
-  const rest = previewSaleAmounts({
-    quantityL: 1,
-    unitPrice: grossAmount,
+  const rest = finalizePreview({
+    grossAmount,
+    oilQuantityL: quantityL,
     assistanceFixed: assistance?.assistanceFixed,
     assistancePercent: assistance?.assistancePercent,
+    assistancePerLitre: assistance?.assistancePerLitre,
   });
   if (!rest) return null;
   return { ...rest, quantityL };
 }
-

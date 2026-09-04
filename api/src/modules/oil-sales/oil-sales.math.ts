@@ -8,6 +8,7 @@ export type SaleAmountInput = {
   unitPrice: number;
   assistanceFixed?: number;
   assistancePercent?: number;
+  assistancePerLitre?: number;
 };
 
 export type SaleAmountResult = {
@@ -15,6 +16,8 @@ export type SaleAmountResult = {
   assistanceFixed: number;
   assistancePercent: number;
   assistancePercentAmount: number;
+  assistancePerLitre: number;
+  assistancePerLitreTotal: number;
   totalAssistance: number;
   finalAmount: number;
 };
@@ -23,17 +26,28 @@ export function roundMoney(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
-export function computeSaleAmounts(input: SaleAmountInput): SaleAmountResult {
-  const quantityL = Number(input.quantityL);
-  const unitPrice = Number(input.unitPrice);
+/**
+ * Apply assistance to a precomputed gross using oil litres for per-litre assistance.
+ * Empty-container revenue is in gross but not in oilQuantityL.
+ */
+export function finalizeSaleAmounts(input: {
+  grossAmount: number;
+  oilQuantityL: number;
+  assistanceFixed?: number;
+  assistancePercent?: number;
+  assistancePerLitre?: number;
+}): SaleAmountResult {
+  const grossAmount = roundMoney(Number(input.grossAmount));
+  const oilQuantityL = roundMoney(Number(input.oilQuantityL) || 0);
   const assistanceFixed = roundMoney(Number(input.assistanceFixed ?? 0));
   const assistancePercent = Number(input.assistancePercent ?? 0);
+  const assistancePerLitre = roundMoney(Number(input.assistancePerLitre ?? 0));
 
-  if (!Number.isFinite(quantityL) || quantityL <= 0) {
-    throw new Error('INVALID_QUANTITY');
-  }
-  if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+  if (!Number.isFinite(grossAmount) || grossAmount < 0) {
     throw new Error('INVALID_UNIT_PRICE');
+  }
+  if (!Number.isFinite(oilQuantityL) || oilQuantityL < 0) {
+    throw new Error('INVALID_QUANTITY');
   }
   if (!Number.isFinite(assistanceFixed) || assistanceFixed < 0) {
     throw new Error('INVALID_ASSISTANCE_FIXED');
@@ -41,10 +55,15 @@ export function computeSaleAmounts(input: SaleAmountInput): SaleAmountResult {
   if (!Number.isFinite(assistancePercent) || assistancePercent < 0 || assistancePercent > 100) {
     throw new Error('INVALID_ASSISTANCE_PERCENT');
   }
+  if (!Number.isFinite(assistancePerLitre) || assistancePerLitre < 0) {
+    throw new Error('INVALID_ASSISTANCE_PER_LITRE');
+  }
 
-  const grossAmount = roundMoney(quantityL * unitPrice);
+  const assistancePerLitreTotal = roundMoney(oilQuantityL * assistancePerLitre);
   const assistancePercentAmount = roundMoney((grossAmount * assistancePercent) / 100);
-  const totalAssistance = roundMoney(assistanceFixed + assistancePercentAmount);
+  const totalAssistance = roundMoney(
+    assistanceFixed + assistancePercentAmount + assistancePerLitreTotal,
+  );
 
   if (totalAssistance > grossAmount + 1e-9) {
     throw new Error('ASSISTANCE_EXCEEDS_GROSS');
@@ -60,9 +79,32 @@ export function computeSaleAmounts(input: SaleAmountInput): SaleAmountResult {
     assistanceFixed,
     assistancePercent,
     assistancePercentAmount,
+    assistancePerLitre,
+    assistancePerLitreTotal,
     totalAssistance,
     finalAmount,
   };
+}
+
+export function computeSaleAmounts(input: SaleAmountInput): SaleAmountResult {
+  const quantityL = Number(input.quantityL);
+  const unitPrice = Number(input.unitPrice);
+
+  if (!Number.isFinite(quantityL) || quantityL <= 0) {
+    throw new Error('INVALID_QUANTITY');
+  }
+  if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+    throw new Error('INVALID_UNIT_PRICE');
+  }
+
+  const grossAmount = roundMoney(quantityL * unitPrice);
+  return finalizeSaleAmounts({
+    grossAmount,
+    oilQuantityL: quantityL,
+    assistanceFixed: input.assistanceFixed,
+    assistancePercent: input.assistancePercent,
+    assistancePerLitre: input.assistancePerLitre,
+  });
 }
 
 export type StockSummary = {
@@ -118,6 +160,7 @@ export const SALE_CALC_ERROR_AR: Record<string, string> = {
   INVALID_UNIT_PRICE: 'سعر اللتر غير صالح',
   INVALID_ASSISTANCE_FIXED: 'قيمة المساعدة الثابتة غير صالحة',
   INVALID_ASSISTANCE_PERCENT: 'نسبة المساعدة يجب أن تكون بين 0 و 100',
+  INVALID_ASSISTANCE_PER_LITRE: 'مساعدة اللتر غير صالحة',
   ASSISTANCE_EXCEEDS_GROSS: 'إجمالي المساعدة لا يمكن أن يتجاوز المبلغ الإجمالي',
   NEGATIVE_FINAL_AMOUNT: 'المبلغ النهائي لا يمكن أن يكون سالباً',
   INVALID_CONTAINER: 'تعبئة غير صالحة — تحقق من السعة وعدد الضلف',
@@ -213,20 +256,26 @@ export function resolveSaleLine(input: SaleLineInput): ResolvedSaleLine {
 
 export function computeSaleFromLines(
   lines: SaleLineInput[],
-  assistance?: { assistanceFixed?: number; assistancePercent?: number },
+  assistance?: {
+    assistanceFixed?: number;
+    assistancePercent?: number;
+    assistancePerLitre?: number;
+  },
 ): SaleAmountResult & { quantityL: number; lines: ResolvedSaleLine[] } {
   if (!lines.length) throw new Error('EMPTY_LINES');
   const resolved = lines.map(resolveSaleLine);
+  // Oil litres only — CONTAINER_ONLY contributes 0 (empty containers excluded)
   const quantityL = roundMoney(resolved.reduce((s, l) => s + l.quantityL, 0));
   const grossAmount = roundMoney(resolved.reduce((s, l) => s + l.lineGross, 0));
   if (!(grossAmount > 0) && !(quantityL > 0)) {
     throw new Error('EMPTY_LINES');
   }
-  const rest = computeSaleAmounts({
-    quantityL: 1,
-    unitPrice: grossAmount,
+  const rest = finalizeSaleAmounts({
+    grossAmount,
+    oilQuantityL: quantityL,
     assistanceFixed: assistance?.assistanceFixed,
     assistancePercent: assistance?.assistancePercent,
+    assistancePerLitre: assistance?.assistancePerLitre,
   });
   return { ...rest, quantityL, lines: resolved };
 }

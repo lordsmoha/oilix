@@ -209,6 +209,12 @@ export class CreateOilSaleDto {
   assistancePercent?: number;
 
   @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  assistancePerLitre?: number;
+
+  @IsOptional()
   @IsString()
   @MaxLength(1000)
   notes?: string;
@@ -567,4 +573,10 @@ export class PreviewSaleDto {
   @Min(0)
   @Max(100)
   assistancePercent?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  assistancePerLitre?: number;
 }

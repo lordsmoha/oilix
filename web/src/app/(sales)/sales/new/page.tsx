@@ -44,6 +44,9 @@ export default function NewSalePage() {
   );
   const canAssistFixed = useAuthStore((s) => s.hasPermission('OIL_SALES_ASSISTANCE_FIXED'));
   const canAssistPercent = useAuthStore((s) => s.hasPermission('OIL_SALES_ASSISTANCE_PERCENT'));
+  const canAssistPerLitre = useAuthStore((s) =>
+    s.hasPermission('OIL_SALES_ASSISTANCE_PER_LITRE'),
+  );
 
   const [oilSource, setOilSource] = useState<OilSourceValue>('STORED');
   const [oilType, setOilType] = useState<OilTypeValue>('GREEN');
@@ -60,6 +63,7 @@ export default function NewSalePage() {
   const [containerSellPrice, setContainerSellPrice] = useState('');
   const [assistanceFixed, setAssistanceFixed] = useState('0');
   const [assistancePercent, setAssistancePercent] = useState('0');
+  const [assistancePerLitre, setAssistancePerLitre] = useState('0');
   const [notes, setNotes] = useState('');
   const [overrideStock, setOverrideStock] = useState(false);
   const [overrideContainerStock, setOverrideContainerStock] = useState(false);
@@ -144,6 +148,7 @@ export default function NewSalePage() {
   const preview = previewSaleFromLines(pricedLines, {
     assistanceFixed: canAssistFixed ? Number(assistanceFixed || 0) : 0,
     assistancePercent: canAssistPercent ? Number(assistancePercent || 0) : 0,
+    assistancePerLitre: canAssistPerLitre ? Number(assistancePerLitre || 0) : 0,
   });
 
   const createCustomer = useMutation({
@@ -258,6 +263,7 @@ export default function NewSalePage() {
           })),
           assistanceFixed: canAssistFixed ? Number(assistanceFixed || 0) : 0,
           assistancePercent: canAssistPercent ? Number(assistancePercent || 0) : 0,
+          assistancePerLitre: canAssistPerLitre ? Number(assistancePerLitre || 0) : 0,
           notes: notes.trim() || undefined,
           overrideStock,
           overrideContainerStock,
@@ -624,33 +630,54 @@ export default function NewSalePage() {
           )}
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          {showOilType ? (
-            <Input
-              label="سعر اللتر (د.ج)"
-              inputMode="decimal"
-              value={unitPrice}
-              onChange={(e) => setUnitPrice(e.target.value)}
-              disabled={!canChangePrice}
-            />
-          ) : null}
-          {canAssistPercent ? (
-            <Input
-              label="مساعدة نسبة %"
-              inputMode="decimal"
-              value={assistancePercent}
-              onChange={(e) => setAssistancePercent(e.target.value)}
-            />
-          ) : null}
-          {canAssistFixed ? (
-            <Input
-              label="مساعدة ثابتة (د.ج)"
-              inputMode="decimal"
-              value={assistanceFixed}
-              onChange={(e) => setAssistanceFixed(e.target.value)}
-            />
-          ) : null}
+        <div className="space-y-3 rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-4">
+          <h3 className="text-sm font-black">المساعدة</h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {canAssistPerLitre ? (
+              <div className="space-y-1 sm:col-span-2">
+                <Input
+                  label="مساعدة لكل لتر (دج / لتر)"
+                  inputMode="decimal"
+                  value={assistancePerLitre}
+                  onChange={(e) => setAssistancePerLitre(e.target.value)}
+                />
+                {preview && Number(assistancePerLitre || 0) > 0 && preview.quantityL > 0 ? (
+                  <p className="text-xs font-bold text-amber-900 dark:text-amber-300">
+                    {formatNumber(Number(assistancePerLitre || 0), 0)} دج ×{' '}
+                    {formatNumber(preview.quantityL, 1)} لتر ={' '}
+                    {formatNumber(preview.assistancePerLitreTotal, 0)} دج
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+            {canAssistPercent ? (
+              <Input
+                label="مساعدة نسبة %"
+                inputMode="decimal"
+                value={assistancePercent}
+                onChange={(e) => setAssistancePercent(e.target.value)}
+              />
+            ) : null}
+            {canAssistFixed ? (
+              <Input
+                label="مساعدة ثابتة (د.ج)"
+                inputMode="decimal"
+                value={assistanceFixed}
+                onChange={(e) => setAssistanceFixed(e.target.value)}
+              />
+            ) : null}
+          </div>
         </div>
+
+        {showOilType ? (
+          <Input
+            label="سعر اللتر (د.ج)"
+            inputMode="decimal"
+            value={unitPrice}
+            onChange={(e) => setUnitPrice(e.target.value)}
+            disabled={!canChangePrice}
+          />
+        ) : null}
 
         <Input label="ملاحظات" value={notes} onChange={(e) => setNotes(e.target.value)} />
 
@@ -664,18 +691,27 @@ export default function NewSalePage() {
                 <Line label="النوع" value="ضلف فقط — بدون زيت" />
               )}
               <Line label="المبلغ الإجمالي" value={`${formatNumber(preview.grossAmount, 0)} د.ج`} />
+              {canAssistPerLitre ? (
+                <Line
+                  label="مساعدة اللتر"
+                  value={`− ${formatNumber(preview.assistancePerLitreTotal, 0)} د.ج`}
+                />
+              ) : null}
               {canAssistPercent ? (
                 <Line
-                  label={`مساعدة ${preview.assistancePercent}%`}
+                  label="المساعدة بالنسبة"
                   value={`− ${formatNumber(preview.assistancePercentAmount, 0)} د.ج`}
                 />
               ) : null}
               {canAssistFixed ? (
-                <Line label="مساعدة ثابتة" value={`− ${formatNumber(preview.assistanceFixed, 0)} د.ج`} />
+                <Line
+                  label="مساعدة ثابتة"
+                  value={`− ${formatNumber(preview.assistanceFixed, 0)} د.ج`}
+                />
               ) : null}
               <Line label="إجمالي المساعدات" value={`− ${formatNumber(preview.totalAssistance, 0)} د.ج`} />
               <div className="mt-3 flex items-center justify-between border-t border-amber-800/20 pt-3">
-                <span className="text-base font-black">صافي الدفع</span>
+                <span className="text-base font-black">الصافي للدفع</span>
                 <span className="text-2xl font-black tabular-nums text-amber-900 dark:text-amber-300">
                   {formatNumber(preview.finalAmount, 0)} د.ج
                 </span>

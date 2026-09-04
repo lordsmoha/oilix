@@ -11,7 +11,7 @@
 ## Quick facts
 
 - IP: `192.168.1.249`
-- Path: `/home/oilixu/oilix`
+- Path: `/home/oilixu/oilix` (not `/opt`)
 - Repo: `https://github.com/lordsmoha/oilix.git`
 - URL: `http://192.168.1.249`
 - Login after seed: `admin` / `admin123`

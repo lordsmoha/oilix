@@ -23,6 +23,8 @@ type SaleDetail = {
   assistanceFixed: string | number;
   assistancePercent: string | number;
   assistancePercentAmount: string | number;
+  assistancePerLitre?: string | number;
+  assistancePerLitreTotal?: string | number;
   totalAssistance: string | number;
   finalAmount: string | number;
   status: string;
@@ -161,7 +163,22 @@ export default function SaleDetailPage({
           إجمالي الزيت: <strong>{formatNumber(Number(s.quantityL), 1)} لتر</strong>
         </p>
         <p>الإجمالي: {formatNumber(Number(s.grossAmount), 0)} د.ج</p>
-        <p>المساعدات: {formatNumber(Number(s.totalAssistance), 0)} د.ج</p>
+        {Number(s.assistancePerLitreTotal ?? 0) > 0 ? (
+          <p>
+            مساعدة اللتر ({formatNumber(Number(s.assistancePerLitre ?? 0), 0)} دج/لتر):{' '}
+            {formatNumber(Number(s.assistancePerLitreTotal), 0)} د.ج
+          </p>
+        ) : null}
+        {Number(s.assistancePercentAmount) > 0 ? (
+          <p>
+            مساعدة نسبية ({formatNumber(Number(s.assistancePercent), 1)}%):{' '}
+            {formatNumber(Number(s.assistancePercentAmount), 0)} د.ج
+          </p>
+        ) : null}
+        {Number(s.assistanceFixed) > 0 ? (
+          <p>مساعدة ثابتة: {formatNumber(Number(s.assistanceFixed), 0)} د.ج</p>
+        ) : null}
+        <p>إجمالي المساعدات: {formatNumber(Number(s.totalAssistance), 0)} د.ج</p>
         <p className="text-lg font-black">الصافي: {formatNumber(Number(s.finalAmount), 0)} د.ج</p>
         <p className="text-xs text-[var(--app-text-dim)]">العامل: {operator}</p>
       </div>

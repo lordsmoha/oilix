@@ -12,6 +12,8 @@ export type OilSaleReceiptPayload = {
     assistanceFixed: string | number;
     assistancePercent: string | number;
     assistancePercentAmount: string | number;
+    assistancePerLitre?: string | number;
+    assistancePerLitreTotal?: string | number;
     totalAssistance: string | number;
     finalAmount: string | number;
     notes?: string | null;
@@ -65,6 +67,8 @@ export function OilSaleReceiptDocument({ data }: { data: OilSaleReceiptPayload }
     sale.createdBy?.username ||
     '—';
   const assistPct = Number(sale.assistancePercent);
+  const assistPerLitre = Number(sale.assistancePerLitre ?? 0);
+  const assistPerLitreTotal = Number(sale.assistancePerLitreTotal ?? 0);
   const hasOil = Number(sale.quantityL) > 0;
 
   return (
@@ -164,18 +168,33 @@ export function OilSaleReceiptDocument({ data }: { data: OilSaleReceiptPayload }
           <Row label="سعر / لتر" value={`${money(sale.unitPrice)} د.ج`} />
         ) : null}
         <Row label="المبلغ الإجمالي" value={`${money(sale.grossAmount)} د.ج`} />
-        <Row
-          label={`مساعدة ${assistPct}%`}
-          value={`− ${money(sale.assistancePercentAmount)} د.ج`}
-        />
-        <Row label="مساعدة ثابتة" value={`− ${money(sale.assistanceFixed)} د.ج`} />
+        {assistPerLitreTotal > 0 ? (
+          <>
+            <p className="opacity-80">مساعدة اللتر:</p>
+            <div className="flex items-start justify-between gap-2">
+              <span className="opacity-80">
+                {money(assistPerLitre)} دج × {litres(sale.quantityL)} لتر
+              </span>
+              <span className="tabular-nums">− {money(assistPerLitreTotal)} د.ج</span>
+            </div>
+          </>
+        ) : null}
+        {assistPct > 0 || Number(sale.assistancePercentAmount) > 0 ? (
+          <Row
+            label={`مساعدة ${assistPct}%`}
+            value={`− ${money(sale.assistancePercentAmount)} د.ج`}
+          />
+        ) : null}
+        {Number(sale.assistanceFixed) > 0 ? (
+          <Row label="مساعدة ثابتة" value={`− ${money(sale.assistanceFixed)} د.ج`} />
+        ) : null}
         <Row label="إجمالي المساعدات" value={`− ${money(sale.totalAssistance)} د.ج`} bold />
       </div>
 
       <div className="my-2 border-t-2 border-black" />
 
       <div className="flex items-center justify-between text-[14px] font-black">
-        <span>صافي الدفع</span>
+        <span>الصافي للدفع</span>
         <span className="tabular-nums">{money(sale.finalAmount)} د.ج</span>
       </div>
 

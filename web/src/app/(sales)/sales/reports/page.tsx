@@ -14,6 +14,7 @@ type Report = {
     gross: number;
     assistanceFixed: number;
     assistancePercentAmount: number;
+    assistancePerLitreTotal?: number;
     totalAssistance: number;
     net: number;
     oilRevenue?: number;
@@ -209,7 +210,12 @@ export default function SalesReportsPage() {
         />
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Card
+          label="مساعدة اللتر"
+          value={s ? formatNumber(s.assistancePerLitreTotal ?? 0, 0) : '—'}
+          unit="د.ج"
+        />
         <Card label="مساعدة ثابتة" value={s ? formatNumber(s.assistanceFixed, 0) : '—'} unit="د.ج" />
         <Card
           label="مساعدة نسبية"

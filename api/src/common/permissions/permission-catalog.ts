@@ -39,6 +39,7 @@ export const OIL_SALES_PERMISSIONS = [
   'OIL_SALES_SALES_CHANGE_PRICE',
   'OIL_SALES_ASSISTANCE_FIXED',
   'OIL_SALES_ASSISTANCE_PERCENT',
+  'OIL_SALES_ASSISTANCE_PER_LITRE',
   'OIL_SALES_ASSISTANCE_MODIFY',
   'OIL_SALES_ASSISTANCE_TOTALS',
   'OIL_SALES_STOCK_VIEW',
@@ -109,6 +110,7 @@ export const PERMISSION_ALIASES: Record<string, string[]> = {
     'OIL_SALES_STOCK_VIEW',
     'OIL_SALES_ASSISTANCE_FIXED',
     'OIL_SALES_ASSISTANCE_PERCENT',
+    'OIL_SALES_ASSISTANCE_PER_LITRE',
     'OIL_SALES_CASH_REGISTER_VIEW_OWN',
     'OIL_SALES_CASH_REGISTER_OPEN',
   ],
@@ -243,6 +245,7 @@ export const PERMISSION_MATRIX: PermissionMatrixGroup[] = [
     actions: [
       { key: 'OIL_SALES_ASSISTANCE_FIXED', label: 'مساعدة ثابتة' },
       { key: 'OIL_SALES_ASSISTANCE_PERCENT', label: 'مساعدة نسبة' },
+      { key: 'OIL_SALES_ASSISTANCE_PER_LITRE', label: 'مساعدة لكل لتر' },
       { key: 'OIL_SALES_ASSISTANCE_MODIFY', label: 'تعديل المساعدة' },
       { key: 'OIL_SALES_ASSISTANCE_TOTALS', label: 'عرض إجمالي المساعدات' },
     ],
