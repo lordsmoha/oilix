@@ -77,4 +77,7 @@ export function applyRealtimeSync(
 }
 
 export const FALLBACK_POLL_MS = 30_000;
-export const NOTIFICATION_FALLBACK_MS = 20_000;
+/** When WebSocket is down — poll notifications often. */
+export const NOTIFICATION_FALLBACK_MS = 8_000;
+/** Safety net while WS reports connected (covers silent sockets). */
+export const NOTIFICATION_CONNECTED_POLL_MS = 15_000;

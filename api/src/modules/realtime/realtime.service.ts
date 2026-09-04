@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import type { Server } from 'socket.io';
+import type { Namespace, Server } from 'socket.io';
 import { REALTIME_EVENTS } from './realtime.constants';
 import type {
   RealtimeConflictPayload,
@@ -8,13 +8,31 @@ import type {
   RealtimeSyncPayload,
 } from './realtime.types';
 
+type SocketServerLike = Server | Namespace;
+
 @Injectable()
 export class RealtimeService {
   private readonly logger = new Logger(RealtimeService.name);
-  private server: Server | null = null;
+  private server: SocketServerLike | null = null;
 
-  setServer(server: Server) {
+  setServer(server: SocketServerLike) {
     this.server = server;
+    const name =
+      server && typeof (server as Namespace).name === 'string'
+        ? (server as Namespace).name
+        : '(root)';
+    this.logger.log(`Realtime server bound (${name})`);
+  }
+
+  /** Resolve the /realtime namespace whether Nest injected Namespace or root Server. */
+  private getNsp(): Namespace | Server | null {
+    if (!this.server) return null;
+    const s = this.server as Server & Namespace;
+    if (typeof s.name === 'string' && s.name === '/realtime') return s;
+    if (typeof (s as Server).of === 'function') {
+      return (s as Server).of('/realtime');
+    }
+    return s;
   }
 
   private roomForSeason(seasonId?: string) {
@@ -28,17 +46,27 @@ export class RealtimeService {
       timestamp: new Date().toISOString(),
     };
 
-    if (!this.server) {
-      this.logger.debug(`Realtime skipped (no server): ${payload.entity}/${payload.action}`);
+    const nsp = this.getNsp();
+    if (!nsp) {
+      this.logger.warn(
+        `Realtime skipped (no server): ${payload.entity}/${payload.action}`,
+      );
       return payload;
     }
 
-    const room = this.roomForSeason(payload.seasonId);
-    if (room) {
-      this.server.to(room).emit(REALTIME_EVENTS.SYNC, payload);
+    // Broadcast once to every client on /realtime (room join is optional).
+    // Do not also emit on the root `/` namespace — web clients never hear that.
+    nsp.emit(REALTIME_EVENTS.SYNC, payload);
+
+    if (payload.entity === 'notification') {
+      this.logger.log(
+        `Realtime notification → /realtime (${payload.notification?.title ?? payload.entityId})`,
+      );
+    } else {
+      this.logger.debug(
+        `Realtime ${payload.entity}/${payload.action} → /realtime`,
+      );
     }
-    this.server.emit(REALTIME_EVENTS.SYNC, payload);
-    this.logger.debug(`Realtime ${payload.entity}/${payload.action} → ${room ?? 'all'}`);
     return payload;
   }
 
@@ -57,12 +85,13 @@ export class RealtimeService {
       message: 'تم تعديل السجل من مستخدم آخر. يرجى تحديث البيانات وإعادة المحاولة.',
     };
 
-    if (!this.server) return;
+    const nsp = this.getNsp();
+    if (!nsp) return;
 
     const room = this.roomForSeason(seasonId);
     if (room) {
-      this.server.to(room).emit(REALTIME_EVENTS.CONFLICT, payload);
+      nsp.to(room).emit(REALTIME_EVENTS.CONFLICT, payload);
     }
-    this.server.emit(REALTIME_EVENTS.CONFLICT, payload);
+    nsp.emit(REALTIME_EVENTS.CONFLICT, payload);
   }
 }

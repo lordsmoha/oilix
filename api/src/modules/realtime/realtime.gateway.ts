@@ -41,8 +41,9 @@ export class RealtimeGateway
     private readonly prisma: PrismaService,
   ) {}
 
-  afterInit() {
-    this.realtimeService.setServer(this.server);
+  afterInit(server: Server) {
+    // Prefer the decorator-injected server; fall back to afterInit arg.
+    this.realtimeService.setServer(this.server ?? server);
     this.logger.log('Realtime gateway ready (/realtime)');
   }
 
@@ -50,6 +51,7 @@ export class RealtimeGateway
     try {
       const token = this.extractToken(client);
       if (!token) {
+        this.logger.debug('Realtime reject: missing token');
         client.disconnect(true);
         return;
       }
@@ -60,6 +62,7 @@ export class RealtimeGateway
         select: { id: true, username: true },
       });
       if (!user) {
+        this.logger.debug('Realtime reject: user inactive/missing');
         client.disconnect(true);
         return;
       }
@@ -80,7 +83,13 @@ export class RealtimeGateway
         userId: user.id,
         seasonId: seasonId ?? null,
       });
-    } catch {
+      this.logger.debug(
+        `Realtime connected: ${user.username} season=${seasonId ?? 'none'}`,
+      );
+    } catch (err) {
+      this.logger.debug(
+        `Realtime reject: auth failed (${err instanceof Error ? err.message : 'error'})`,
+      );
       client.disconnect(true);
     }
   }

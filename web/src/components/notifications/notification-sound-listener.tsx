@@ -3,21 +3,31 @@
 import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { playNotificationSound } from '@/lib/notification-sound';
+import {
+  announceNotification,
+  markNotificationsSeen,
+} from '@/lib/notification-announce';
 import { useAuthStore } from '@/lib/auth-store';
 
-type Notification = { id: string; read: boolean };
+type Notification = {
+  id: string;
+  title: string;
+  message: string;
+  read: boolean;
+};
 
 type NotificationsResponse = {
   items: Notification[];
   unreadCount: number;
 };
 
-/** Détecte les nouvelles notifications via polling (fallback hors WebSocket). */
+/**
+ * Detects new notifications via query refreshes (WS invalidate or poll).
+ * Announces toast + sound for any unread id not already announced by WS.
+ */
 export function NotificationSoundListener() {
   const token = useAuthStore((s) => s.token);
   const initialized = useRef(false);
-  const seenIds = useRef(new Set<string>());
 
   const { data } = useQuery({
     queryKey: ['notifications'],
@@ -25,23 +35,22 @@ export function NotificationSoundListener() {
       (await api.get<NotificationsResponse>('/notifications', { params: { limit: 40 } }))
         .data,
     enabled: !!token,
-    staleTime: 5_000,
+    staleTime: 3_000,
+    refetchInterval: 15_000,
+    refetchOnWindowFocus: true,
   });
 
   useEffect(() => {
     if (!data?.items) return;
 
     if (!initialized.current) {
-      data.items.forEach((n) => seenIds.current.add(n.id));
+      markNotificationsSeen(data.items.map((n) => n.id));
       initialized.current = true;
       return;
     }
 
     for (const n of data.items) {
-      if (!n.read && !seenIds.current.has(n.id)) {
-        seenIds.current.add(n.id);
-        playNotificationSound(n.id);
-      }
+      if (!n.read) announceNotification(n);
     }
   }, [data?.items]);
 

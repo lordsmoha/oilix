@@ -12,13 +12,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { io, type Socket } from 'socket.io-client';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/lib/auth-store';
-import { playNotificationSound } from '@/lib/notification-sound';
+import { announceNotification } from '@/lib/notification-announce';
 import { useSeasonStore } from '@/lib/season-store';
 import {
   applyRealtimeSync,
   FALLBACK_POLL_MS,
   getRealtimeOrigin,
   NOTIFICATION_FALLBACK_MS,
+  NOTIFICATION_CONNECTED_POLL_MS,
 } from '@/lib/realtime-sync';
 import type {
   RealtimeConflictPayload,
@@ -69,12 +70,8 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       markSyncing();
       applyRealtimeSync(queryClient, payload);
 
-      if (payload.entity === 'notification' && payload.notification && !payload.notification.read) {
-        playNotificationSound(payload.notification.id);
-        toast.info(payload.notification.title, {
-          description: payload.notification.message,
-          duration: 12_000,
-        });
+      if (payload.entity === 'notification' && payload.notification) {
+        announceNotification(payload.notification);
       }
     },
     [queryClient, markSyncing],
@@ -89,7 +86,8 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     }
 
     setStatus('connecting');
-    const socket = io(`${getRealtimeOrigin()}/realtime`, {
+    const origin = getRealtimeOrigin();
+    const socket = io(`${origin}/realtime`, {
       auth: { token },
       query: viewSeasonId ? { seasonId: viewSeasonId } : {},
       transports: ['websocket', 'polling'],
@@ -103,6 +101,12 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     socket.on('connect', () => setStatus('connected'));
     socket.on('disconnect', () => setStatus('disconnected'));
     socket.io.on('reconnect_attempt', () => setStatus('connecting'));
+    socket.on('connect_error', (err) => {
+      setStatus('disconnected');
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('[realtime] connect_error', origin, err.message);
+      }
+    });
 
     socket.on('sync', (payload: RealtimeSyncPayload) => {
       processEvent(payload);
@@ -127,7 +131,8 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [token, processEvent, queryClient]);
+    // Reconnect when season changes so handshake carries the active season.
+  }, [token, viewSeasonId, processEvent, queryClient]);
 
   useEffect(() => {
     const socket = socketRef.current;
@@ -135,8 +140,21 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     socket.emit('join-season', viewSeasonId);
   }, [viewSeasonId, status]);
 
+  // Always poll notifications — even while "connected" — so a silent/broken
+  // socket cannot leave the bell stuck until a full page refresh.
   useEffect(() => {
-    if (status === 'connected' || !token) return;
+    if (!token) return;
+
+    const notifMs =
+      status === 'connected' ? NOTIFICATION_CONNECTED_POLL_MS : NOTIFICATION_FALLBACK_MS;
+
+    const notifPoll = setInterval(() => {
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    }, notifMs);
+
+    if (status === 'connected') {
+      return () => clearInterval(notifPoll);
+    }
 
     const poll = setInterval(() => {
       void queryClient.invalidateQueries({ queryKey: ['clients'] });
@@ -144,10 +162,6 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       void queryClient.invalidateQueries({ queryKey: ['processing-board'] });
       void queryClient.invalidateQueries({ queryKey: ['notifications'] });
     }, FALLBACK_POLL_MS);
-
-    const notifPoll = setInterval(() => {
-      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    }, NOTIFICATION_FALLBACK_MS);
 
     return () => {
       clearInterval(poll);
