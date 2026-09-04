@@ -10,7 +10,7 @@ export function resolveApiUrl(): string {
   const fromExtra = (Constants.expoConfig?.extra?.apiUrl as string | undefined)?.trim();
   if (fromExtra) return fromExtra.replace(/\/$/, '');
 
-  return 'http://192.168.1.249/api/v1';
+  return 'http://192.168.1.249:3001/api/v1';
 }
 
 export const API_URL = resolveApiUrl();

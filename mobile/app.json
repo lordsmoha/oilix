@@ -64,7 +64,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiUrl": "http://192.168.1.249/api/v1"
+      "apiUrl": "http://192.168.1.249:3001/api/v1"
     }
   }
 }

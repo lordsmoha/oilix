@@ -11,7 +11,7 @@ const LABELS = {
 type Props = { light?: boolean };
 
 export function SyncIndicator({ light }: Props) {
-  const { status, syncing } = useRealtime();
+  const { status, syncing, lastError } = useRealtime();
   const c = useThemeColors();
 
   const dotColor =
@@ -29,6 +29,11 @@ export function SyncIndicator({ light }: Props) {
           : { backgroundColor: c.surface, borderColor: c.border },
         syncing && { borderColor: light ? '#fff' : c.primary },
       ]}
+      accessibilityLabel={
+        lastError && status !== 'connected'
+          ? `${LABELS[status]} — ${lastError}`
+          : LABELS[status]
+      }
     >
       <View style={[styles.dot, { backgroundColor: dotColor }]} />
       <Text style={[styles.text, { color: light ? 'rgba(255,255,255,0.9)' : c.textMuted }]}>
