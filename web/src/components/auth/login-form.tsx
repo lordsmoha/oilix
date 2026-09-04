@@ -3,7 +3,7 @@
 import { FormEvent, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import axios, { type AxiosError } from 'axios';
 import { Eye, EyeOff, Lock, LogIn, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
@@ -12,6 +12,23 @@ import { useAuthStore, type AuthUser } from '@/lib/auth-store';
 import { canAccessWorkspace } from '@/lib/permission-catalog';
 import { useWorkspaceStore, workspaceHome } from '@/lib/workspace-store';
 import { cn } from '@/lib/utils';
+
+type LoginResponse = { accessToken: string; user: AuthUser };
+
+/** Reliable across Next.js bundles (axios.isAxiosError can fail with duplicate packages). */
+function asAxiosError(err: unknown): AxiosError<{ message?: string | string[] }> | null {
+  if (!err || typeof err !== 'object') return null;
+  const e = err as AxiosError<{ message?: string | string[] }>;
+  if (axios.isAxiosError(e)) return e;
+  if ('response' in e || 'request' in e || 'isAxiosError' in e) return e;
+  return null;
+}
+
+function errorText(err: unknown): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (typeof err === 'string') return err;
+  return 'خطأ غير متوقع';
+}
 
 export function LoginForm() {
   const router = useRouter();
@@ -26,11 +43,28 @@ export function LoginForm() {
     const username = String(fd.get('username'));
     const password = String(fd.get('password'));
     setLoading(true);
+    const apiUrl = `${resolveApiBaseUrl()}/auth/login`;
     try {
-      const { data } = await api.post<{ accessToken: string; user: AuthUser }>('/auth/login', {
+      const { data, status, headers } = await api.post<LoginResponse>('/auth/login', {
         username,
         password,
       });
+
+      const contentType = String(headers?.['content-type'] ?? '');
+      if (contentType.includes('text/html') || typeof data === 'string') {
+        toast.error(
+          `الخادم أرجع HTML بدل JSON (${apiUrl}). تحقق من Nginx و NEXT_PUBLIC_API_URL=/api/v1 ثم أعد build.`,
+        );
+        return;
+      }
+
+      if (!data?.accessToken || !data?.user?.id) {
+        toast.error(
+          `استجابة دخول غير صالحة (${status} · ${apiUrl}). تأكد أن الـ API يعمل خلف Nginx.`,
+        );
+        return;
+      }
+
       setAuth(data.accessToken, data.user);
       const ws = workspace ?? 'mill';
       if (!canAccessWorkspace(data.user.permissions, ws, data.user.role)) {
@@ -40,25 +74,26 @@ export function LoginForm() {
       toast.success('مرحباً بك');
       router.push(workspaceHome(ws));
     } catch (err) {
-      const apiUrl = `${resolveApiBaseUrl()}/auth/login`;
-      if (axios.isAxiosError(err) && !err.response) {
+      const ax = asAxiosError(err);
+      if (ax && !ax.response) {
         toast.error(`تعذر الاتصال بالخادم (${apiUrl}). تحقق من Nginx و pm2.`);
-      } else if (axios.isAxiosError(err) && err.response?.status === 401) {
+      } else if (ax?.response?.status === 401) {
         toast.error('اسم المستخدم أو كلمة المرور غير صحيحة');
-      } else if (axios.isAxiosError(err) && err.response?.status === 404) {
+      } else if (ax?.response?.status === 404) {
         toast.error(`مسار API غير موجود (${apiUrl}) — أعد build الويب على السيرفر`);
-      } else if (axios.isAxiosError(err) && err.response?.status === 429) {
+      } else if (ax?.response?.status === 429) {
         toast.error('تم تجاوز عدد المحاولات — انتظر 15 دقيقة');
-      } else if (axios.isAxiosError(err) && (err.response?.status ?? 0) >= 500) {
-        toast.error('خطأ في الخادم — راجع pm2 logs oilix-api');
-      } else if (axios.isAxiosError(err)) {
-        const msg = err.response?.data?.message;
-        const status = err.response?.status;
+      } else if (ax && (ax.response?.status ?? 0) >= 500) {
+        toast.error(`خطأ في الخادم (${ax.response?.status}) — راجع pm2 logs oilix-api`);
+      } else if (ax) {
+        const msg = ax.response?.data?.message;
+        const status = ax.response?.status;
         if (typeof msg === 'string') toast.error(msg);
         else if (Array.isArray(msg)) toast.error(msg.join(' · '));
         else toast.error(`تعذر تسجيل الدخول (${status ?? '?'} · ${apiUrl})`);
       } else {
-        toast.error('تعذر تسجيل الدخول — خطأ غير متوقع');
+        toast.error(`تعذر تسجيل الدخول — ${errorText(err)} (${apiUrl})`);
+        console.error('[login]', err);
       }
     } finally {
       setLoading(false);
