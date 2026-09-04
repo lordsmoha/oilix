@@ -83,24 +83,25 @@ DATABASE_URL="postgresql://oilix:63049812Oilix@localhost:5432/oilix?schema=publi
 ### Option A — Git
 
 ```bash
-sudo mkdir -p /opt/oilix
-sudo chown $USER:$USER /opt/oilix
-cd /opt/oilix
-git clone <https://github.com/lordsmoha/oilix.git> .
+mkdir -p /home/oilixu/oilix
+cd /home/oilixu/oilix
+git clone https://github.com/lordsmoha/oilix.git .
 ```
+
+> Projet sous **`/home/oilixu/oilix`** — ne pas utiliser `/opt`.
 
 ### Option B — Copie depuis votre PC (SCP)
 
 Depuis votre machine de développement :
 
 ```bash
-scp -r e:\Projects\Web\Oilix user@192.168.1.249:/opt/oilix
+scp -r e:\Projects\Web\Oilix user@192.168.1.249:/home/oilixu/oilix
 ```
 
 Sur le serveur :
 
 ```bash
-cd /opt/oilix
+cd /home/oilixu/oilix
 ```
 
 ---
@@ -108,7 +109,7 @@ cd /opt/oilix
 ## 6. Configuration de l’API (`api/.env`)
 
 ```bash
-cd /opt/oilix/api
+cd /home/oilixu/oilix/api
 cp .env.example .env
 nano .env
 ```
@@ -139,7 +140,7 @@ openssl rand -hex 32
 ### Installation, migrations et données initiales
 
 ```bash
-cd /opt/oilix/api
+cd /home/oilixu/oilix/api
 npm ci
 npx prisma generate
 npx prisma migrate deploy
@@ -170,7 +171,7 @@ Arrêter le test avec `Ctrl+C`.
 ## 7. Configuration du Web (`web/.env.local`)
 
 ```bash
-cd /opt/oilix/web
+cd /home/oilixu/oilix/web
 cp .env.local.example .env.local
 nano .env.local
 ```
@@ -185,7 +186,7 @@ PUBLIC_HOST=192.168.1.249
 > Modifiez `.env.local` **avant** `npm run build`.
 
 ```bash
-cd /opt/oilix/web
+cd /home/oilixu/oilix/web
 npm ci
 npm run build
 npm run start
@@ -218,14 +219,14 @@ sudo npm install -g pm2
 
 ### Fichier `ecosystem.config.cjs` à la racine du projet
 
-Créez `/opt/oilix/ecosystem.config.cjs` :
+Créez `/home/oilixu/oilix/ecosystem.config.cjs` :
 
 ```javascript
 module.exports = {
   apps: [
     {
       name: 'oilix-api',
-      cwd: '/opt/oilix/api',
+      cwd: '/home/oilixu/oilix/api',
       script: 'dist/main.js',
       instances: 1,
       autorestart: true,
@@ -235,7 +236,7 @@ module.exports = {
     },
     {
       name: 'oilix-web',
-      cwd: '/opt/oilix/web',
+      cwd: '/home/oilixu/oilix/web',
       script: 'node_modules/next/dist/bin/next',
       args: 'start -H 0.0.0.0 -p 3000',
       instances: 1,
@@ -251,7 +252,7 @@ module.exports = {
 Démarrage :
 
 ```bash
-cd /opt/oilix
+cd /home/oilixu/oilix
 pm2 start ecosystem.config.cjs
 pm2 save
 pm2 startup
@@ -367,7 +368,7 @@ sudo ufw allow 80/tcp
 ## 13. Mises à jour du projet
 
 ```bash
-cd /opt/oilix
+cd /home/oilixu/oilix
 git pull   # ou recopier les fichiers
 
 cd api
@@ -414,7 +415,7 @@ psql -U oilix -d oilix -h localhost -W
 
 - Reconstruire le web **après** modification de `.env.local` :
   ```bash
-  cd /opt/oilix/web && npm run build && pm2 restart oilix-web
+  cd /home/oilixu/oilix/web && npm run build && pm2 restart oilix-web
   ```
 
 ### Mobile ne se connecte pas

@@ -9,7 +9,7 @@ Guide pour **remplacer tout le projet** sur le serveur Ubuntu quand :
 |---------|--------|
 | PC Windows | `e:\Projects\Web\Oilix` |
 | Serveur Ubuntu | `192.168.1.249` |
-| Dossier serveur | `/opt/oilix` |
+| Dossier serveur | `/home/oilixu/oilix` |
 | Web (via Nginx) | `http://192.168.1.249` |
 | API (via Nginx) | `http://192.168.1.249/api/v1` |
 | Direct ports (dev only) | web `:3000` · API `:3001` |
@@ -29,7 +29,7 @@ Guide pour **remplacer tout le projet** sur le serveur Ubuntu quand :
 
 1. Ouvrir **WinSCP**, se connecter à `192.168.1.249` (SFTP + login SSH).
 2. Côté gauche : `e:\Projects\Web\Oilix`
-3. Côté droit : `/opt/oilix`
+3. Côté droit : `/home/oilixu/oilix`
 
 ### Copier et écraser
 
@@ -37,8 +37,8 @@ Glissez-déposez ces dossiers **en remplaçant tout** :
 
 | Depuis Windows | Vers Ubuntu |
 |----------------|-------------|
-| `api\` | `/opt/oilix/api/` |
-| `web\` | `/opt/oilix/web/` |
+| `api\` | `/home/oilixu/oilix/api/` |
+| `web\` | `/home/oilixu/oilix/web/` |
 
 ### À ne **pas** copier depuis Windows (important)
 
@@ -56,7 +56,7 @@ Option : supprimer d’abord le code sur le serveur, garder `node_modules` :
 
 ```bash
 # Sur Ubuntu (SSH) — avant la copie WinSCP
-cd /opt/oilix
+cd /home/oilixu/oilix
 mv api/node_modules /tmp/api-node_modules.bak
 mv web/node_modules /tmp/web-node_modules.bak
 rm -rf api web
@@ -76,7 +76,7 @@ Après la copie, le `.env` Windows pointe souvent vers `localhost`. **Corrigez s
 ### `api/.env`
 
 ```bash
-nano /opt/oilix/api/.env
+nano /home/oilixu/oilix/api/.env
 ```
 
 ```env
@@ -100,7 +100,7 @@ ENABLE_SWAGGER=true
 ### `web/.env.local` (Nginx — **sans** ports 3000/3001)
 
 ```bash
-nano /opt/oilix/web/.env.local
+nano /home/oilixu/oilix/web/.env.local
 ```
 
 ```env
@@ -119,7 +119,7 @@ Connectez-vous en SSH :
 
 ```bash
 ssh user@192.168.1.249
-cd /opt/oilix/api
+cd /home/oilixu/oilix/api
 ```
 
 ### Option A — Reset Prisma (simple, tout efface)
@@ -144,13 +144,13 @@ npm run prisma:seed
 ## Étape 4 — Build et redémarrage
 
 ```bash
-cd /opt/oilix/api
+cd /home/oilixu/oilix/api
 npm run build
 
-cd /opt/oilix/web
+cd /home/oilixu/oilix/web
 npm run build
 
-cd /opt/oilix
+cd /home/oilixu/oilix
 pm2 restart all
 pm2 status
 ```
@@ -166,15 +166,15 @@ curl http://127.0.0.1:3001/api/v1/health
 ## Script tout-en-un (Ubuntu, après WinSCP + .env corrigés)
 
 ```bash
-cd /opt/oilix/api
+cd /home/oilixu/oilix/api
 npx prisma generate
 npx prisma migrate reset --force
 npm run build
 
-cd /opt/oilix/web
+cd /home/oilixu/oilix/web
 npm run build
 
-cd /opt/oilix
+cd /home/oilixu/oilix
 pm2 restart all
 pm2 status
 
@@ -204,14 +204,14 @@ Les `node_modules` du serveur sont obsolètes (nouveaux paquets dans `package.js
 
 1. Sur une machine Ubuntu **avec Internet** (ou le serveur une fois connecté) :
    ```bash
-   cd /opt/oilix/api && npm ci
-   cd /opt/oilix/web && npm ci
+   cd /home/oilixu/oilix/api && npm ci
+   cd /home/oilixu/oilix/web && npm ci
    tar -czf ~/oilix-modules.tar.gz api/node_modules web/node_modules
    ```
 2. Transférer `oilix-modules.tar.gz` par USB ou LAN vers `192.168.1.249`
 3. Sur le serveur :
    ```bash
-   cd /opt/oilix
+   cd /home/oilixu/oilix
    rm -rf api/node_modules web/node_modules
    tar -xzf ~/oilix-modules.tar.gz
    ```
@@ -224,7 +224,7 @@ Puis refaire l’étape 4 (build + pm2).
 
 | Problème | Solution |
 |----------|----------|
-| Page blanche / ancienne version | `cd /opt/oilix/web && npm run build && pm2 restart oilix-web` + Ctrl+F5 |
+| Page blanche / ancienne version | `cd /home/oilixu/oilix/web && npm run build && pm2 restart oilix-web` + Ctrl+F5 |
 | API ne répond pas | `pm2 logs oilix-api` puis `pm2 restart oilix-api` |
 | Erreur base de données | `sudo systemctl status postgresql` |
 | CORS dans le navigateur | `CORS_ORIGIN` doit contenir `http://192.168.1.249` (Nginx) **et** `http://192.168.1.249:3000` |

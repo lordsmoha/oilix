@@ -6,7 +6,7 @@ Complete guide to install **Oilix** on a **new / reinstalled** Ubuntu server.
 |---------|--------|
 | Server IP | `192.168.1.249` |
 | Linux user | `oilixu` (change if yours is different) |
-| Project path | `/home/oilixu/oilix` |
+| Project path | `/home/oilixu/oilix` (**not** `/opt`) |
 | GitHub | `https://github.com/lordsmoha/oilix.git` |
 | Public URL | `http://192.168.1.249` |
 | API (via Nginx) | `http://192.168.1.249/api/v1` |
@@ -106,6 +106,8 @@ git clone https://github.com/lordsmoha/oilix.git .
 # cd oilix
 ```
 
+> **Path:** `/home/oilixu/oilix` under user home.  
+> **Do not** install under `/opt/oilix`.
 Check:
 
 ```bash
