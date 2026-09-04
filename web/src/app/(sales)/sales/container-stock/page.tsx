@@ -62,6 +62,7 @@ const TYPE_AR: Record<string, string> = {
   DIRECT_CONTAINER_SALE: 'بيع فارغ',
   SALE_CANCELLATION: 'إلغاء بيع',
   INVENTORY_COUNT: 'جرد',
+  INVENTORY_ADJUSTMENT: 'تسوية جرد',
   DAMAGE: 'تلف',
   LOSS: 'فقدان',
   ADJUSTMENT: 'تصحيح',
@@ -185,17 +186,20 @@ export default function ContainerStockPage() {
       toast.error(e.response?.data?.message || 'تعذر التسجيل'),
   });
 
+  const theoretical = selected?.stock.theoreticalQty ?? 0;
+
   const countMut = useMutation({
     mutationFn: async () =>
       (
         await api.post('/oil-sales/container-stock/inventory', {
           containerId: activeId,
           physicalQty: Number(physical),
+          expectedTheoreticalQty: theoretical,
           note: countNote.trim() || undefined,
         })
       ).data,
     onSuccess: () => {
-      toast.success('تم تسجيل جرد الضلف');
+      toast.success('تم تأكيد جرد الضلف — الكمية الفعلية أصبحت المخزون الحالي');
       setPhysical('');
       setCountNote('');
       invalidate();
@@ -204,7 +208,6 @@ export default function ContainerStockPage() {
       toast.error(e.response?.data?.message || 'تعذر الجرد'),
   });
 
-  const theoretical = selected?.stock.theoreticalQty ?? 0;
   const phys = Number(physical);
   const diffPreview = Number.isFinite(phys) && phys >= 0 ? phys - theoretical : null;
 
@@ -278,18 +281,23 @@ export default function ContainerStockPage() {
             >
               <h2 className="font-black">جرد فعلي — {selected.name}</h2>
               <p className="text-sm">
-                النظري: <strong>{theoretical}</strong>
+                المخزون قبل الجرد: <strong>{theoretical}</strong>
                 {diffPreview != null ? (
                   <>
                     {' '}
                     · الفرق: <strong>{diffPreview}</strong>
+                    {' '}
+                    · المخزون الجديد: <strong>{phys}</strong>
                   </>
                 ) : null}
+              </p>
+              <p className="text-xs text-[var(--app-text-dim)]">
+                بعد التأكيد تصبح الكمية الفعلية هي المخزون الحالي
               </p>
               <Input label="الكمية الفعلية" inputMode="numeric" value={physical} onChange={(e) => setPhysical(e.target.value)} required />
               <Input label="ملاحظة" value={countNote} onChange={(e) => setCountNote(e.target.value)} />
               <Button type="submit" loading={countMut.isPending} className="bg-amber-700 hover:bg-amber-800">
-                حفظ الجرد
+                تأكيد الجرد وتعيين المخزون الجديد
               </Button>
             </form>
           ) : null}

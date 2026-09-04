@@ -12,6 +12,7 @@ const TYPE_AR: Record<string, string> = {
   SALE: 'بيع',
   SALE_CANCELLATION: 'إلغاء بيع',
   INVENTORY_COUNT: 'جرد',
+  INVENTORY_ADJUSTMENT: 'تسوية جرد',
   ADJUSTMENT: 'تعديل',
   LOSS: 'خسارة',
   MANUAL_CORRECTION: 'تصحيح يدوي',

@@ -97,6 +97,12 @@ export class InventoryCountDto {
   @Min(0)
   physicalQty!: number;
 
+  /** Theoretical stock shown on the form — reject if stock changed concurrently. */
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  expectedTheoreticalQty?: number;
+
   @IsOptional()
   @IsString()
   @MaxLength(1000)
@@ -308,6 +314,11 @@ export class ContainerInventoryCountDto {
   @IsNumber()
   @Min(0)
   physicalQty!: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  expectedTheoreticalQty?: number;
 
   @IsOptional()
   @IsString()

@@ -107,6 +107,49 @@ export function computeSaleAmounts(input: SaleAmountInput): SaleAmountResult {
   });
 }
 
+export type InventoryDifferenceType = 'LOSS' | 'SURPLUS' | 'BALANCED';
+
+export type InventoryReconcileResult = {
+  theoreticalBefore: number;
+  physicalQty: number;
+  difference: number;
+  lossQty: number;
+  surplusQty: number;
+  differenceType: InventoryDifferenceType;
+  newCurrentStock: number;
+  adjustmentQty: number;
+};
+
+/**
+ * Physical inventory becomes the new operational stock baseline.
+ * difference = physical - theoretical; LOSS never negative.
+ */
+export function reconcileInventoryCount(
+  theoreticalBefore: number,
+  physicalQty: number,
+): InventoryReconcileResult {
+  const before = roundMoney(Number(theoreticalBefore) || 0);
+  const physical = roundMoney(Number(physicalQty));
+  if (!Number.isFinite(physical) || physical < 0) {
+    throw new Error('INVALID_PHYSICAL_QTY');
+  }
+  const difference = roundMoney(physical - before);
+  const lossQty = roundMoney(Math.max(0, before - physical));
+  const surplusQty = roundMoney(Math.max(0, physical - before));
+  const differenceType: InventoryDifferenceType =
+    lossQty > 0 ? 'LOSS' : surplusQty > 0 ? 'SURPLUS' : 'BALANCED';
+  return {
+    theoreticalBefore: before,
+    physicalQty: physical,
+    difference,
+    lossQty,
+    surplusQty,
+    differenceType,
+    newCurrentStock: physical,
+    adjustmentQty: difference,
+  };
+}
+
 export type StockSummary = {
   totalAdded: number;
   totalSold: number;

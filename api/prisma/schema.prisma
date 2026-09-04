@@ -123,6 +123,7 @@ enum OilStockMovementType {
   SALE
   SALE_CANCELLATION
   INVENTORY_COUNT
+  INVENTORY_ADJUSTMENT
   ADJUSTMENT
   LOSS
   MANUAL_CORRECTION
@@ -146,10 +147,17 @@ enum OilContainerStockMovementType {
   DIRECT_CONTAINER_SALE
   SALE_CANCELLATION
   INVENTORY_COUNT
+  INVENTORY_ADJUSTMENT
   DAMAGE
   LOSS
   ADJUSTMENT
   MANUAL_CORRECTION
+}
+
+enum OilInventoryDifferenceType {
+  LOSS
+  SURPLUS
+  BALANCED
 }
 
 enum OilPricingMode {
@@ -558,20 +566,22 @@ model OilStockMovement {
 }
 
 model OilInventoryCount {
-  id                 String             @id @default(uuid())
-  seasonId           String             @map("season_id")
-  season             Season             @relation(fields: [seasonId], references: [id])
-  oilSource          OilSource          @default(STORED) @map("oil_source")
-  oilType            OilType            @map("oil_type")
-  theoreticalBefore  Decimal            @map("theoretical_before") @db.Decimal(14, 2)
-  physicalQty        Decimal            @map("physical_qty") @db.Decimal(14, 2)
-  difference         Decimal            @db.Decimal(14, 2)
-  lossQty            Decimal            @map("loss_qty") @db.Decimal(14, 2)
+  id                 String                     @id @default(uuid())
+  seasonId           String                     @map("season_id")
+  season             Season                     @relation(fields: [seasonId], references: [id])
+  oilSource          OilSource                  @default(STORED) @map("oil_source")
+  oilType            OilType                    @map("oil_type")
+  theoreticalBefore  Decimal                    @map("theoretical_before") @db.Decimal(14, 2)
+  physicalQty        Decimal                    @map("physical_qty") @db.Decimal(14, 2)
+  difference         Decimal                    @db.Decimal(14, 2)
+  differenceType     OilInventoryDifferenceType @default(BALANCED) @map("difference_type")
+  lossQty            Decimal                    @map("loss_qty") @db.Decimal(14, 2)
+  surplusQty         Decimal                    @default(0) @map("surplus_qty") @db.Decimal(14, 2)
   note               String?
-  userId             String             @map("user_id")
-  user               User               @relation(fields: [userId], references: [id])
+  userId             String                     @map("user_id")
+  user               User                       @relation(fields: [userId], references: [id])
   movements          OilStockMovement[]
-  createdAt          DateTime           @default(now()) @map("created_at")
+  createdAt          DateTime                   @default(now()) @map("created_at")
 
   @@index([seasonId, oilSource, oilType, createdAt])
   @@index([userId])
@@ -716,20 +726,22 @@ model OilContainerStockMovement {
 }
 
 model OilContainerInventoryCount {
-  id                String                       @id @default(uuid())
-  seasonId          String                       @map("season_id")
-  season            Season                       @relation(fields: [seasonId], references: [id])
-  containerId       String                       @map("container_id")
-  container         OilContainer                 @relation(fields: [containerId], references: [id])
-  theoreticalBefore Int                          @map("theoretical_before")
-  physicalQty       Int                          @map("physical_qty")
+  id                String                     @id @default(uuid())
+  seasonId          String                     @map("season_id")
+  season            Season                     @relation(fields: [seasonId], references: [id])
+  containerId       String                     @map("container_id")
+  container         OilContainer               @relation(fields: [containerId], references: [id])
+  theoreticalBefore Int                        @map("theoretical_before")
+  physicalQty       Int                        @map("physical_qty")
   difference        Int
-  lossQty           Int                          @map("loss_qty")
+  differenceType    OilInventoryDifferenceType @default(BALANCED) @map("difference_type")
+  lossQty           Int                        @map("loss_qty")
+  surplusQty        Int                        @default(0) @map("surplus_qty")
   note              String?
-  userId            String                       @map("user_id")
-  user              User                         @relation(fields: [userId], references: [id])
+  userId            String                     @map("user_id")
+  user              User                       @relation(fields: [userId], references: [id])
   movements         OilContainerStockMovement[]
-  createdAt         DateTime                     @default(now()) @map("created_at")
+  createdAt         DateTime                   @default(now()) @map("created_at")
 
   @@index([seasonId, containerId, createdAt])
   @@index([userId])

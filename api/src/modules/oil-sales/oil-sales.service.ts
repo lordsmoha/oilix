@@ -29,6 +29,7 @@ import {
   computeSaleFromLines,
   computeStockSummary,
   computeContainerStockSummary,
+  reconcileInventoryCount,
   SALE_CALC_ERROR_AR,
   type SaleLineInput,
 } from './oil-sales.math';
@@ -748,65 +749,71 @@ export class OilSalesService {
     const result = await this.prisma.$transaction(async (tx) => {
       const bal = await this.lockBalance(tx, seasonId, dto.oilSource, dto.oilType);
       const theoretical = bal.theoreticalQty;
-      const difference = physical - theoretical;
-      const lossQty = Math.max(0, theoretical - physical);
+
+      if (
+        dto.expectedTheoreticalQty != null &&
+        Math.abs(Number(dto.expectedTheoreticalQty) - theoretical) > 1e-6
+      ) {
+        throw new BadRequestException(
+          `تغير المخزون أثناء الجرد (الحالي: ${theoretical} لتر). أعد الحساب ثم أكّد الجرد.`,
+        );
+      }
+
+      const recon = reconcileInventoryCount(theoretical, physical);
 
       const count = await tx.oilInventoryCount.create({
         data: {
           seasonId,
           oilSource: dto.oilSource,
           oilType: dto.oilType,
-          theoreticalBefore: dec(theoretical),
-          physicalQty: dec(physical),
-          difference: dec(difference),
-          lossQty: dec(lossQty),
+          theoreticalBefore: dec(recon.theoreticalBefore),
+          physicalQty: dec(recon.physicalQty),
+          difference: dec(recon.difference),
+          differenceType: recon.differenceType,
+          lossQty: dec(recon.lossQty),
+          surplusQty: dec(recon.surplusQty),
           note: dto.note?.trim() || null,
           userId,
         },
       });
 
+      // Physical count becomes the new operational (theoretical) stock baseline.
       await tx.oilStockBalance.update({
         where: { id: bal.id },
         data: {
-          physicalQty: dec(physical),
+          theoreticalQty: dec(recon.newCurrentStock),
+          physicalQty: dec(recon.physicalQty),
           lastInventoryAt: new Date(),
           version: { increment: 1 },
         },
       });
+
+      const noteParts = [
+        `جرد فعلي → مخزون جديد ${recon.newCurrentStock} لتر`,
+        recon.differenceType === 'LOSS'
+          ? `خسارة ${recon.lossQty} لتر`
+          : recon.differenceType === 'SURPLUS'
+            ? `فائض ${recon.surplusQty} لتر`
+            : 'بدون فرق',
+      ];
+      if (dto.note?.trim()) noteParts.push(dto.note.trim());
 
       const movement = await tx.oilStockMovement.create({
         data: {
           seasonId,
           oilSource: dto.oilSource,
           oilType: dto.oilType,
-          type: OilStockMovementType.INVENTORY_COUNT,
-          quantityL: dec(difference),
-          stockBefore: dec(theoretical),
-          stockAfter: dec(theoretical),
+          type: OilStockMovementType.INVENTORY_ADJUSTMENT,
+          quantityL: dec(recon.adjustmentQty),
+          stockBefore: dec(recon.theoreticalBefore),
+          stockAfter: dec(recon.newCurrentStock),
           inventoryCountId: count.id,
-          note: dto.note?.trim() || `جرد فعلي: ${physical} لتر`,
+          note: noteParts.join(' — '),
           userId,
         },
       });
 
-      if (lossQty > 0) {
-        await tx.oilStockMovement.create({
-          data: {
-            seasonId,
-            oilSource: dto.oilSource,
-            oilType: dto.oilType,
-            type: OilStockMovementType.LOSS,
-            quantityL: dec(-lossQty),
-            stockBefore: dec(theoretical),
-            stockAfter: dec(theoretical),
-            inventoryCountId: count.id,
-            note: `خسارة جرد: ${lossQty} لتر`,
-            userId,
-          },
-        });
-      }
-
-      return { count, movement };
+      return { count, movement, recon };
     });
 
     await this.audit.log({
@@ -815,9 +822,11 @@ export class OilSalesService {
       module: AUDIT_MODULES.OIL_SALES,
       entity: 'OilInventoryCount',
       entityId: result.count.id,
-      description: `جرد ${dto.oilType}: فعلي ${physical} لتر`,
+      description: `جرد ${OIL_SOURCE_LABELS[dto.oilSource]} / ${OIL_TYPE_LABELS[dto.oilType]}: ${result.recon.theoreticalBefore} → ${result.recon.newCurrentStock} لتر (${result.recon.differenceType})`,
       newData: result.count as unknown as Prisma.InputJsonValue,
     });
+
+    this.emitSalesRealtime(REALTIME_ENTITIES.OIL_STOCK, AUDIT_ACTIONS.UPDATE, seasonId, userId);
 
     return result.count;
   }
@@ -2289,8 +2298,22 @@ export class OilSalesService {
     const result = await this.prisma.$transaction(async (tx) => {
       const bal = await this.lockContainerBalance(tx, seasonId, dto.containerId);
       const theoretical = bal.theoreticalQty;
-      const difference = physical - theoretical;
-      const lossQty = Math.max(0, theoretical - physical);
+
+      if (
+        dto.expectedTheoreticalQty != null &&
+        Math.trunc(Number(dto.expectedTheoreticalQty)) !== theoretical
+      ) {
+        throw new BadRequestException(
+          `تغير مخزون الضلف أثناء الجرد (الحالي: ${theoretical} قطعة). أعد الحساب ثم أكّد الجرد.`,
+        );
+      }
+
+      const recon = reconcileInventoryCount(theoretical, physical);
+      const difference = Math.trunc(recon.difference);
+      const lossQty = Math.trunc(recon.lossQty);
+      const surplusQty = Math.trunc(recon.surplusQty);
+      const newStock = Math.trunc(recon.newCurrentStock);
+
       const count = await tx.oilContainerInventoryCount.create({
         data: {
           seasonId,
@@ -2298,32 +2321,40 @@ export class OilSalesService {
           theoreticalBefore: theoretical,
           physicalQty: physical,
           difference,
+          differenceType: recon.differenceType,
           lossQty,
+          surplusQty,
           note: dto.note?.trim() || null,
           userId,
         },
       });
+
       await tx.oilContainerStockBalance.update({
         where: { id: bal.id },
         data: {
+          theoreticalQty: newStock,
           physicalQty: physical,
           lastInventoryAt: new Date(),
           version: { increment: 1 },
         },
       });
+
       await tx.oilContainerStockMovement.create({
         data: {
           seasonId,
           containerId: dto.containerId,
-          type: OilContainerStockMovementType.INVENTORY_COUNT,
-          quantity: 0,
+          type: OilContainerStockMovementType.INVENTORY_ADJUSTMENT,
+          quantity: difference,
           stockBefore: theoretical,
-          stockAfter: theoretical,
+          stockAfter: newStock,
           inventoryCountId: count.id,
-          note: dto.note?.trim() || `جرد فعلي ${physical} (فرق ${difference})`,
+          note:
+            dto.note?.trim() ||
+            `جرد فعلي → مخزون جديد ${newStock} (فرق ${difference})`,
           userId,
         },
       });
+
       return tx.oilContainerInventoryCount.findUniqueOrThrow({
         where: { id: count.id },
         include: { user: { select: this.userSelect }, container: true },
@@ -2336,8 +2367,9 @@ export class OilSalesService {
       module: AUDIT_MODULES.OIL_SALES,
       entity: 'OilContainerInventoryCount',
       entityId: result.id,
-      description: `جرد ضلف ${container.name}: نظري ${result.theoreticalBefore} / فعلي ${physical}`,
+      description: `جرد ضلف ${container.name}: نظري ${result.theoreticalBefore} → فعلي ${physical}`,
     });
+    this.emitSalesRealtime(REALTIME_ENTITIES.CONTAINER_STOCK, AUDIT_ACTIONS.UPDATE, seasonId, userId);
     return result;
   }
 

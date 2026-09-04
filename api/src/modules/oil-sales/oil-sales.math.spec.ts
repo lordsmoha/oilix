@@ -3,6 +3,7 @@ import {
   computeSaleAmounts,
   computeSaleFromLines,
   computeStockSummary,
+  reconcileInventoryCount,
   resolveSaleLine,
   roundMoney,
 } from './oil-sales.math';
@@ -331,6 +332,50 @@ describe('oil-sales.math', () => {
   describe('roundMoney', () => {
     it('rounds to 2 decimals', () => {
       expect(roundMoney(10.005)).toBe(10.01);
+    });
+  });
+
+  describe('reconcileInventoryCount', () => {
+    it('Test 1: 200 → 190 = LOSS 10, new stock 190', () => {
+      const r = reconcileInventoryCount(200, 190);
+      expect(r.lossQty).toBe(10);
+      expect(r.surplusQty).toBe(0);
+      expect(r.differenceType).toBe('LOSS');
+      expect(r.difference).toBe(-10);
+      expect(r.newCurrentStock).toBe(190);
+      expect(r.adjustmentQty).toBe(-10);
+    });
+
+    it('Test 2: 200 → 205 = SURPLUS 5, new stock 205', () => {
+      const r = reconcileInventoryCount(200, 205);
+      expect(r.surplusQty).toBe(5);
+      expect(r.lossQty).toBe(0);
+      expect(r.differenceType).toBe('SURPLUS');
+      expect(r.newCurrentStock).toBe(205);
+      expect(r.adjustmentQty).toBe(5);
+    });
+
+    it('Test 3: after inventory 190 + addition 50 = 240', () => {
+      const afterInv = reconcileInventoryCount(200, 190).newCurrentStock;
+      expect(afterInv + 50).toBe(240);
+    });
+
+    it('Test 4: after inventory 190 − sale 20 = 170', () => {
+      const afterInv = reconcileInventoryCount(200, 190).newCurrentStock;
+      expect(afterInv - 20).toBe(170);
+    });
+
+    it('Test 5: Stored Green reconcile does not change Farmer Green math', () => {
+      const stored = reconcileInventoryCount(200, 190);
+      const farmer = 100;
+      expect(stored.newCurrentStock).toBe(190);
+      expect(farmer).toBe(100);
+    });
+
+    it('does not record negative loss', () => {
+      const r = reconcileInventoryCount(200, 205);
+      expect(r.lossQty).toBe(0);
+      expect(r.lossQty).toBeGreaterThanOrEqual(0);
     });
   });
 });

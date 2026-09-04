@@ -12,7 +12,7 @@ import {
   type OilSourceValue,
   type OilTypeValue,
 } from '@/lib/sales-nav';
-import { formatNumber, formatDateTimeDz } from '@/lib/utils';
+import { formatNumber, formatDateTimeDz, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/lib/auth-store';
@@ -25,7 +25,9 @@ type Count = {
   theoreticalBefore: string | number;
   physicalQty: string | number;
   difference: string | number;
+  differenceType?: string;
   lossQty: string | number;
+  surplusQty?: string | number;
   note?: string | null;
   createdAt: string;
   user?: { username: string; firstName?: string | null };
@@ -55,8 +57,10 @@ export default function SalesInventoryPage() {
     stockQ.data?.find((s) => s.oilSource === oilSource && s.oilType === oilType)?.theoreticalQty ??
     0;
   const phys = Number(physical);
-  const lossPreview =
-    Number.isFinite(phys) && phys >= 0 ? Math.max(0, theoretical - phys) : null;
+  const validPhys = Number.isFinite(phys) && phys >= 0 && physical.trim() !== '';
+  const difference = validPhys ? phys - theoretical : null;
+  const lossPreview = difference != null ? Math.max(0, theoretical - phys) : null;
+  const surplusPreview = difference != null ? Math.max(0, phys - theoretical) : null;
 
   const mut = useMutation({
     mutationFn: async () =>
@@ -65,16 +69,18 @@ export default function SalesInventoryPage() {
           oilSource,
           oilType,
           physicalQty: Number(physical),
+          expectedTheoreticalQty: theoretical,
           note: note.trim() || undefined,
         })
       ).data,
     onSuccess: () => {
-      toast.success('تم تسجيل الجرد');
+      toast.success('تم تأكيد الجرد — الكمية الفعلية أصبحت المخزون الحالي');
       setPhysical('');
       setNote('');
       void qc.invalidateQueries({ queryKey: ['oil-sales-inventory'] });
       void qc.invalidateQueries({ queryKey: ['oil-sales-stock'] });
       void qc.invalidateQueries({ queryKey: ['oil-sales-dashboard'] });
+      void qc.invalidateQueries({ queryKey: ['oil-sales-movements'] });
     },
     onError: (e: { response?: { data?: { message?: string } } }) =>
       toast.error(e.response?.data?.message || 'تعذر الجرد'),
@@ -82,6 +88,10 @@ export default function SalesInventoryPage() {
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!validPhys) {
+      toast.error('أدخل الكمية الفعلية');
+      return;
+    }
     mut.mutate();
   }
 
@@ -90,7 +100,7 @@ export default function SalesInventoryPage() {
       <div>
         <h1 className="text-2xl font-black">الجرد الفعلي</h1>
         <p className="text-sm text-[var(--app-text-dim)]">
-          الخسارة = المتبقى النظري − الكمية الفعلية
+          بعد التأكيد تصبح الكمية الفعلية هي المخزون الحالي لجميع العمليات القادمة
         </p>
       </div>
 
@@ -133,10 +143,7 @@ export default function SalesInventoryPage() {
               </button>
             ))}
           </div>
-          <p className="text-sm">
-            {oilSourceMeta(oilSource).label} / {oilMeta(oilType).label} — النظري الحالي:{' '}
-            <strong className="tabular-nums">{formatNumber(theoretical, 1)} لتر</strong>
-          </p>
+
           <div className="grid gap-3 sm:grid-cols-2">
             <Input
               label="الكمية الفعلية (لتر)"
@@ -147,28 +154,57 @@ export default function SalesInventoryPage() {
             />
             <Input label="ملاحظة" value={note} onChange={(e) => setNote(e.target.value)} />
           </div>
-          {lossPreview != null ? (
-            <p className="text-sm font-bold text-red-700">
-              الخسارة المتوقعة: {formatNumber(lossPreview, 1)} لتر
+
+          {validPhys ? (
+            <div className="space-y-1.5 rounded-xl border border-amber-700/30 bg-amber-50/60 p-4 text-sm dark:bg-amber-950/20">
+              <Row label="المخزون قبل الجرد" value={`${formatNumber(theoretical, 1)} لتر`} />
+              <Row label="الكمية الفعلية" value={`${formatNumber(phys, 1)} لتر`} />
+              <Row
+                label="الفرق"
+                value={`${difference! >= 0 ? '+' : ''}${formatNumber(difference!, 1)} لتر`}
+              />
+              {lossPreview != null && lossPreview > 0 ? (
+                <Row label="الضائع" value={`${formatNumber(lossPreview, 1)} لتر`} danger />
+              ) : null}
+              {surplusPreview != null && surplusPreview > 0 ? (
+                <Row label="الفائض" value={`${formatNumber(surplusPreview, 1)} لتر`} />
+              ) : null}
+              <div className="mt-2 border-t border-amber-800/20 pt-2">
+                <Row
+                  label="المخزون الجديد بعد التأكيد"
+                  value={`${formatNumber(phys, 1)} لتر`}
+                  bold
+                />
+              </div>
+              <p className="mt-2 text-xs font-bold text-amber-900 dark:text-amber-300">
+                بتأكيد الجرد ستصبح الكمية الفعلية ({formatNumber(phys, 1)} لتر) هي المخزون الحالي
+                لهذا المصدر والنوع فقط.
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-[var(--app-text-dim)]">
+              {oilSourceMeta(oilSource).label} / {oilMeta(oilType).label} — المخزون الحالي:{' '}
+              <strong className="tabular-nums">{formatNumber(theoretical, 1)} لتر</strong>
             </p>
-          ) : null}
+          )}
+
           <Button type="submit" loading={mut.isPending} className="bg-amber-700 hover:bg-amber-800">
-            تسجيل الجرد
+            تأكيد الجرد وتعيين المخزون الجديد
           </Button>
         </form>
       ) : null}
 
       <div className="overflow-x-auto rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)]">
-        <table className="w-full min-w-[800px] text-sm">
+        <table className="w-full min-w-[900px] text-sm">
           <thead className="bg-[var(--app-bg-muted)]">
             <tr>
               <th className="px-3 py-2 text-right">التاريخ</th>
               <th className="px-3 py-2 text-right">المصدر</th>
               <th className="px-3 py-2 text-right">النوع</th>
-              <th className="px-3 py-2 text-right">نظري</th>
-              <th className="px-3 py-2 text-right">فعلي</th>
+              <th className="px-3 py-2 text-right">قبل الجرد</th>
+              <th className="px-3 py-2 text-right">فعلي / جديد</th>
               <th className="px-3 py-2 text-right">فرق</th>
-              <th className="px-3 py-2 text-right">خسارة</th>
+              <th className="px-3 py-2 text-right">النوع</th>
               <th className="px-3 py-2 text-right">المستخدم</th>
             </tr>
           </thead>
@@ -176,6 +212,13 @@ export default function SalesInventoryPage() {
             {(listQ.data ?? []).map((c) => {
               const src = oilSourceMeta(c.oilSource);
               const m = oilMeta(c.oilType);
+              const diffType =
+                c.differenceType ||
+                (Number(c.lossQty) > 0
+                  ? 'LOSS'
+                  : Number(c.difference) > 0
+                    ? 'SURPLUS'
+                    : 'BALANCED');
               return (
                 <tr key={c.id} className="border-t border-[var(--app-border)]">
                   <td className="px-3 py-2 text-xs">{formatDateTimeDz(c.createdAt)}</td>
@@ -186,22 +229,51 @@ export default function SalesInventoryPage() {
                   <td className="px-3 py-2 tabular-nums">
                     {formatNumber(Number(c.theoreticalBefore), 1)}
                   </td>
-                  <td className="px-3 py-2 tabular-nums">
+                  <td className="px-3 py-2 font-bold tabular-nums">
                     {formatNumber(Number(c.physicalQty), 1)}
                   </td>
-                  <td className="px-3 py-2 tabular-nums">{formatNumber(Number(c.difference), 1)}</td>
-                  <td className="px-3 py-2 font-bold text-red-700 tabular-nums">
-                    {formatNumber(Number(c.lossQty), 1)}
+                  <td className="px-3 py-2 tabular-nums">
+                    {formatNumber(Number(c.difference), 1)}
                   </td>
-                  <td className="px-3 py-2">
-                    {c.user?.firstName || c.user?.username || '—'}
+                  <td
+                    className={cn(
+                      'px-3 py-2 font-bold',
+                      diffType === 'LOSS' && 'text-red-700',
+                      diffType === 'SURPLUS' && 'text-emerald-700',
+                    )}
+                  >
+                    {diffType === 'LOSS'
+                      ? `خسارة ${formatNumber(Number(c.lossQty), 1)}`
+                      : diffType === 'SURPLUS'
+                        ? `فائض ${formatNumber(Number(c.surplusQty ?? c.difference), 1)}`
+                        : 'متوازن'}
                   </td>
+                  <td className="px-3 py-2">{c.user?.firstName || c.user?.username || '—'}</td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function Row({
+  label,
+  value,
+  bold,
+  danger,
+}: {
+  label: string;
+  value: string;
+  bold?: boolean;
+  danger?: boolean;
+}) {
+  return (
+    <div className={cn('flex justify-between gap-3', bold && 'font-black', danger && 'text-red-700')}>
+      <span className="text-[var(--app-text-muted)]">{label}</span>
+      <span className="tabular-nums">{value}</span>
     </div>
   );
 }
