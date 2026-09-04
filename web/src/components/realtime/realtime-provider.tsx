@@ -67,12 +67,14 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
         const arr = [...seenEvents.current];
         seenEvents.current = new Set(arr.slice(-200));
       }
-      markSyncing();
-      applyRealtimeSync(queryClient, payload);
 
+      // Toast/sound first — never wait on query refetch.
       if (payload.entity === 'notification' && payload.notification) {
         announceNotification(payload.notification);
       }
+
+      markSyncing();
+      applyRealtimeSync(queryClient, payload);
     },
     [queryClient, markSyncing],
   );
@@ -90,11 +92,15 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     const socket = io(`${origin}/realtime`, {
       auth: { token },
       query: viewSeasonId ? { seasonId: viewSeasonId } : {},
+      // Prefer websocket for low latency; polling only as fallback.
       transports: ['websocket', 'polling'],
+      upgrade: true,
+      rememberUpgrade: true,
       reconnection: true,
       reconnectionAttempts: Infinity,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 8000,
+      reconnectionDelay: 500,
+      reconnectionDelayMax: 4000,
+      timeout: 8_000,
     });
     socketRef.current = socket;
 

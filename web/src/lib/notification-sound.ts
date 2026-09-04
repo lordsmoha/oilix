@@ -4,8 +4,8 @@ import {
 } from './notification-sound-store';
 
 const SOUND_URL = '/sounds/notification.wav';
-/** Légèrement supérieur à la durée du fichier (~3 s) pour éviter les chevauchements */
-const DEBOUNCE_MS = 3_200;
+/** Avoid stacking identical overlaps; per-id dedupe already blocks duplicates. */
+const DEBOUNCE_MS = 400;
 const MAX_TRACKED_IDS = 200;
 
 let audio: HTMLAudioElement | null = null;

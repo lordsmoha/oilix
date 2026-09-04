@@ -25,11 +25,12 @@ export function announceNotification(n: {
   if (!n.id || announcedIds.has(n.id)) return;
   announcedIds.add(n.id);
   prune();
-  playNotificationSound(n.id);
+  // Toast immediately; sound is non-blocking.
   toast.info(n.title, {
     description: n.message,
     duration: 12_000,
   });
+  playNotificationSound(n.id);
 }
 
 /** Mark ids as already seen (initial list load — no toast storm). */

@@ -45,8 +45,8 @@ export function NotificationBell() {
       (await api.get<NotificationsResponse>('/notifications', { params: { limit: 40 } }))
         .data,
     enabled: !!token,
-    staleTime: 3_000,
-    refetchInterval: 15_000,
+    staleTime: 2_000,
+    refetchInterval: 8_000,
     refetchOnWindowFocus: true,
   });
 
