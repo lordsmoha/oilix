@@ -1196,25 +1196,30 @@ export class OilSalesService {
       ...new Set([...consumeByContainer.keys(), ...sellEmptyByContainer.keys()]),
     ].sort();
 
-    const device = this.cashRegisters.requireSalesDevice();
+    const device = this.cashRegisters.requireSalesDevice({ requireCashRegister: false });
     const seasonForSession = seasonId;
 
     const sale = await this.prisma.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`oil-receipt:${seasonId}`}))`;
 
-      const session = await tx.cashRegisterSession.findFirst({
-        where: {
-          cashRegisterId: device.cashRegisterId!,
-          status: 'OPEN',
-          seasonId: seasonForSession,
-        },
-        include: { cashRegister: true, device: true },
-      });
-      if (!session) {
-        throw new BadRequestException('يجب فتح الصندوق قبل إجراء عملية بيع.');
+      const session = device.cashRegisterId
+        ? await tx.cashRegisterSession.findFirst({
+            where: {
+              cashRegisterId: device.cashRegisterId,
+              status: 'OPEN',
+              seasonId: seasonForSession,
+            },
+            include: { cashRegister: true, device: true },
+          })
+        : null;
+      if (session) {
+        await tx.$queryRaw`SELECT id FROM cash_register_sessions WHERE id = ${session.id} FOR UPDATE`;
       }
-      await tx.$queryRaw`SELECT id FROM cash_register_sessions WHERE id = ${session.id} FOR UPDATE`;
-      const register = session.cashRegister;
+      const register =
+        session?.cashRegister ??
+        (device.cashRegisterId
+          ? await tx.cashRegister.findUnique({ where: { id: device.cashRegisterId } })
+          : null);
 
       const oilLocks = new Map<
         string,
@@ -1282,12 +1287,12 @@ export class OilSalesService {
           saleTime: nowTime(),
           createdById: userId,
           deviceId: device.id,
-          cashRegisterId: register.id,
-          cashSessionId: session.id,
+          cashRegisterId: register?.id ?? null,
+          cashSessionId: session?.id ?? null,
           deviceCode: device.code,
           deviceName: device.name,
-          cashRegisterCode: register.code,
-          cashRegisterName: register.name,
+          cashRegisterCode: register?.code ?? null,
+          cashRegisterName: register?.name ?? null,
           items: {
             create: prepared.map((p) => ({
               oilSource: p.oilSource,
@@ -1397,10 +1402,12 @@ export class OilSalesService {
         }
       }
 
-      await tx.cashRegisterSession.update({
-        where: { id: session.id },
-        data: { cashSales: { increment: amounts.finalAmount } },
-      });
+      if (session) {
+        await tx.cashRegisterSession.update({
+          where: { id: session.id },
+          data: { cashSales: { increment: amounts.finalAmount } },
+        });
+      }
 
       return created;
     });

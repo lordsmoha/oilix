@@ -22,7 +22,7 @@ import { useAuthStore } from '@/lib/auth-store';
 import { openOilSaleReceipt } from '@/lib/oil-sale-receipt';
 import { useSeasonReadOnly } from '@/hooks/use-season-read-only';
 
-type Customer = { id: string; name: string; phone?: string | null };
+type Customer = { id: string; name: string; phone?: string | null; address?: string | null };
 type StockRow = {
   oilSource: OilSourceValue;
   oilType: OilTypeValue;
@@ -97,6 +97,7 @@ export default function NewSalePage() {
   const [showNewCustomer, setShowNewCustomer] = useState(false);
   const [newName, setNewName] = useState('');
   const [newPhone, setNewPhone] = useState('');
+  const [newAddress, setNewAddress] = useState('');
   const [oilPanelOpen, setOilPanelOpen] = useState(false);
   const uid = useId();
 
@@ -291,6 +292,7 @@ export default function NewSalePage() {
         await api.post<Customer>('/oil-sales/customers', {
           name: newName.trim(),
           phone: newPhone.trim() || undefined,
+          address: newAddress.trim() || undefined,
         })
       ).data,
     onSuccess: (c) => {
@@ -300,6 +302,7 @@ export default function NewSalePage() {
       setShowNewCustomer(false);
       setNewName('');
       setNewPhone('');
+      setNewAddress('');
       void qc.invalidateQueries({ queryKey: ['oil-sales-customers'] });
     },
     onError: (e: { response?: { data?: { message?: string } } }) =>
@@ -457,14 +460,7 @@ export default function NewSalePage() {
           <p className="text-xs font-bold text-amber-800 dark:text-amber-400">نقطة البيع</p>
           <h1 className="text-2xl font-black">بيع جديد</h1>
         </div>
-        {!cashQ.data?.session ? (
-          <div className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm dark:border-amber-500/40 dark:bg-amber-950/40">
-            <p className="font-bold">يجب فتح الصندوق قبل البيع</p>
-            <Link href="/sales/cash" className="text-xs font-bold underline">
-              فتح الصندوق
-            </Link>
-          </div>
-        ) : cashQ.data.register ? (
+        {cashQ.data?.session && cashQ.data.register ? (
           <p className="text-sm text-[var(--app-text-dim)]">
             الصندوق: {cashQ.data.register.name} ({cashQ.data.register.code})
           </p>
@@ -565,7 +561,8 @@ export default function NewSalePage() {
                 <div>
                   <p className="font-bold">{selectedCustomer.name}</p>
                   <p className="text-xs text-[var(--app-text-dim)]">
-                    {selectedCustomer.phone || 'بدون هاتف'}
+                    {[selectedCustomer.phone, selectedCustomer.address].filter(Boolean).join(' · ') ||
+                      'بدون هاتف'}
                   </p>
                 </div>
                 <button
@@ -611,7 +608,7 @@ export default function NewSalePage() {
             )}
 
             {canCustomer && showNewCustomer ? (
-              <div className="grid gap-2 sm:grid-cols-3">
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 <Input
                   label="اسم الزبون"
                   value={newName}
@@ -621,6 +618,11 @@ export default function NewSalePage() {
                   label="الهاتف"
                   value={newPhone}
                   onChange={(e) => setNewPhone(e.target.value)}
+                />
+                <Input
+                  label="العنوان"
+                  value={newAddress}
+                  onChange={(e) => setNewAddress(e.target.value)}
                 />
                 <div className="flex items-end gap-2">
                   <Button

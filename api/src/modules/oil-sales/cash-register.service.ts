@@ -133,7 +133,8 @@ export class CashRegisterService {
     return row;
   }
 
-  requireSalesDevice() {
+  /** Sales device must be approved; cash register link is optional. */
+  requireSalesDevice(opts?: { requireCashRegister?: boolean }) {
     const device = currentDevice();
     if (!device) throw new ForbiddenException(DEVICE_REQUIRED_MESSAGE);
     if (device.status === 'DISABLED') {
@@ -143,7 +144,7 @@ export class CashRegisterService {
     if (!workspaceMatches(device.workspace, 'sales')) {
       throw new ForbiddenException(DEVICE_WORKSPACE_MESSAGE);
     }
-    if (!device.cashRegisterId) {
+    if (opts?.requireCashRegister !== false && !device.cashRegisterId) {
       throw new BadRequestException('هذا الجهاز غير مربوط بصندوق نقدي.');
     }
     return device;
