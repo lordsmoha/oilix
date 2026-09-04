@@ -13,11 +13,11 @@ import { io, type Socket } from 'socket.io-client';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/lib/auth-store';
 import { announceNotification } from '@/lib/notification-announce';
+import { resolveRealtimeOriginCandidates } from '@/lib/api-url';
 import { useSeasonStore } from '@/lib/season-store';
 import {
   applyRealtimeSync,
   FALLBACK_POLL_MS,
-  getRealtimeOrigin,
   NOTIFICATION_FALLBACK_MS,
   NOTIFICATION_CONNECTED_POLL_MS,
 } from '@/lib/realtime-sync';
@@ -30,11 +30,13 @@ import type {
 type RealtimeContextValue = {
   status: RealtimeStatus;
   syncing: boolean;
+  lastError: string | null;
 };
 
 const RealtimeContext = createContext<RealtimeContextValue>({
   status: 'disconnected',
   syncing: false,
+  lastError: null,
 });
 
 export function useRealtime() {
@@ -43,15 +45,36 @@ export function useRealtime() {
 
 const MAX_SEEN_EVENTS = 400;
 
+function createSocket(
+  origin: string,
+  token: string,
+  seasonId: string | null | undefined,
+): Socket {
+  return io(`${origin}/realtime`, {
+    auth: { token },
+    query: seasonId ? { seasonId } : {},
+    // Polling first is more reliable through broken WS proxies; then upgrade.
+    transports: ['polling', 'websocket'],
+    upgrade: true,
+    rememberUpgrade: true,
+    reconnection: false, // we rotate origins ourselves
+    timeout: 6_000,
+    forceNew: true,
+  });
+}
+
 export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const token = useAuthStore((s) => s.token);
   const viewSeasonId = useSeasonStore((s) => s.viewSeasonId);
   const [status, setStatus] = useState<RealtimeStatus>('disconnected');
   const [syncing, setSyncing] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
   const seenEvents = useRef(new Set<string>());
   const socketRef = useRef<Socket | null>(null);
   const syncingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const originIndex = useRef(0);
+  const disposed = useRef(false);
 
   const markSyncing = useCallback(() => {
     setSyncing(true);
@@ -68,7 +91,6 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
         seenEvents.current = new Set(arr.slice(-200));
       }
 
-      // Toast/sound first — never wait on query refetch.
       if (payload.entity === 'notification' && payload.notification) {
         announceNotification(payload.notification);
       }
@@ -80,64 +102,113 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
+    disposed.current = false;
+
     if (!token) {
       setStatus('disconnected');
+      setLastError(null);
       socketRef.current?.disconnect();
       socketRef.current = null;
       return;
     }
 
-    setStatus('connecting');
-    const origin = getRealtimeOrigin();
-    const socket = io(`${origin}/realtime`, {
-      auth: { token },
-      query: viewSeasonId ? { seasonId: viewSeasonId } : {},
-      // Prefer websocket for low latency; polling only as fallback.
-      transports: ['websocket', 'polling'],
-      upgrade: true,
-      rememberUpgrade: true,
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 500,
-      reconnectionDelayMax: 4000,
-      timeout: 8_000,
-    });
-    socketRef.current = socket;
-
-    socket.on('connect', () => setStatus('connected'));
-    socket.on('disconnect', () => setStatus('disconnected'));
-    socket.io.on('reconnect_attempt', () => setStatus('connecting'));
-    socket.on('connect_error', (err) => {
+    const candidates = resolveRealtimeOriginCandidates();
+    if (!candidates.length) {
       setStatus('disconnected');
-      if (process.env.NODE_ENV !== 'production') {
-        console.warn('[realtime] connect_error', origin, err.message);
-      }
-    });
+      setLastError('لا يوجد عنوان للمزامنة الفورية');
+      return;
+    }
 
-    socket.on('sync', (payload: RealtimeSyncPayload) => {
-      processEvent(payload);
-    });
+    originIndex.current = 0;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
-    socket.on('conflict', (payload: RealtimeConflictPayload) => {
-      toast.warning('تعارض في التعديل', {
-        description: payload.message,
-        duration: 10_000,
+    const bindSocket = (socket: Socket, origin: string) => {
+      socketRef.current = socket;
+
+      socket.on('connect', () => {
+        if (disposed.current) return;
+        setStatus('connected');
+        setLastError(null);
+        if (viewSeasonId) socket.emit('join-season', viewSeasonId);
+        if (process.env.NODE_ENV !== 'production') {
+          console.info('[realtime] connected', origin);
+        }
       });
-      applyRealtimeSync(queryClient, {
-        eventId: payload.eventId,
-        timestamp: payload.timestamp,
-        entity: payload.entity,
-        entityId: payload.entityId,
-        action: 'CONFLICT',
-        module: 'system',
+
+      socket.on('disconnect', (reason) => {
+        if (disposed.current) return;
+        setStatus('disconnected');
+        // Try next origin / reconnect shortly
+        scheduleNext(`disconnect: ${reason}`);
       });
-    });
+
+      socket.on('connect_error', (err) => {
+        if (disposed.current) return;
+        setStatus('disconnected');
+        setLastError(err.message);
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('[realtime] connect_error', origin, err.message);
+        }
+        socket.disconnect();
+        scheduleNext(err.message);
+      });
+
+      socket.on('sync', (payload: RealtimeSyncPayload) => {
+        processEvent(payload);
+      });
+
+      socket.on('conflict', (payload: RealtimeConflictPayload) => {
+        toast.warning('تعارض في التعديل', {
+          description: payload.message,
+          duration: 10_000,
+        });
+        applyRealtimeSync(queryClient, {
+          eventId: payload.eventId,
+          timestamp: payload.timestamp,
+          entity: payload.entity,
+          entityId: payload.entityId,
+          action: 'CONFLICT',
+          module: 'system',
+        });
+      });
+    };
+
+    const connectAt = (index: number) => {
+      if (disposed.current) return;
+      const origin = candidates[index % candidates.length];
+      originIndex.current = index % candidates.length;
+
+      socketRef.current?.removeAllListeners();
+      socketRef.current?.disconnect();
+      socketRef.current = null;
+
+      setStatus('connecting');
+      const socket = createSocket(origin, token, viewSeasonId);
+      bindSocket(socket, origin);
+    };
+
+    const scheduleNext = (reason: string) => {
+      if (disposed.current) return;
+      if (retryTimer) clearTimeout(retryTimer);
+      const next = originIndex.current + 1;
+      // Rotate through all candidates, then pause before full loop
+      const delay = next % candidates.length === 0 ? 4_000 : 700;
+      retryTimer = setTimeout(() => {
+        if (disposed.current) return;
+        setLastError(reason);
+        connectAt(next);
+      }, delay);
+    };
+
+    connectAt(0);
 
     return () => {
-      socket.disconnect();
+      disposed.current = true;
+      if (retryTimer) clearTimeout(retryTimer);
+      socketRef.current?.removeAllListeners();
+      socketRef.current?.disconnect();
       socketRef.current = null;
     };
-    // Reconnect when season changes so handshake carries the active season.
   }, [token, viewSeasonId, processEvent, queryClient]);
 
   useEffect(() => {
@@ -146,8 +217,6 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     socket.emit('join-season', viewSeasonId);
   }, [viewSeasonId, status]);
 
-  // Always poll notifications — even while "connected" — so a silent/broken
-  // socket cannot leave the bell stuck until a full page refresh.
   useEffect(() => {
     if (!token) return;
 
@@ -176,7 +245,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   }, [status, token, queryClient]);
 
   return (
-    <RealtimeContext.Provider value={{ status, syncing }}>
+    <RealtimeContext.Provider value={{ status, syncing, lastError }}>
       {children}
     </RealtimeContext.Provider>
   );

@@ -6,6 +6,7 @@ export function getRealtimeOrigin() {
   return resolveRealtimeOrigin();
 }
 
+
 type NotificationsCache = {
   items: Array<{
     id: string;

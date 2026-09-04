@@ -1,4 +1,5 @@
 const DEFAULT_API = 'http://localhost:3001/api/v1';
+const DEFAULT_API_PORT = '3001';
 
 function isLocalDev(hostname: string, port: string): boolean {
   return (
@@ -65,11 +66,68 @@ export function resolveApiBaseUrl(): string {
   return configured;
 }
 
-/** Realtime/socket origin (no /api/v1 suffix). */
-export function resolveRealtimeOrigin(): string {
-  const base = resolveApiBaseUrl();
-  if (base.startsWith('/')) {
-    return typeof window !== 'undefined' ? window.location.origin : '';
+function stripApiSuffix(url: string): string {
+  return url.replace(/\/api\/v1\/?$/, '').replace(/\/$/, '');
+}
+
+/**
+ * Candidate Socket.IO origins (no /realtime suffix).
+ * Tries page origin (Nginx) and direct API :3001 so realtime works even when
+ * `/socket.io/` is not proxied to Nest.
+ */
+export function resolveRealtimeOriginCandidates(): string[] {
+  const explicit = process.env.NEXT_PUBLIC_REALTIME_URL?.trim();
+  if (explicit) return [explicit.replace(/\/$/, '')];
+
+  if (typeof window === 'undefined') {
+    const configured = normalizeApiUrl(
+      process.env.NEXT_PUBLIC_API_URL ?? DEFAULT_API,
+    );
+    if (configured.startsWith('/')) return [];
+    return [stripApiSuffix(configured)];
   }
-  return base.replace(/\/api\/v1\/?$/, '');
+
+  const { protocol, hostname, port, origin } = window.location;
+  const configured = normalizeApiUrl(
+    process.env.NEXT_PUBLIC_API_URL ?? DEFAULT_API,
+  );
+  const out: string[] = [];
+  const add = (value: string) => {
+    const v = value.replace(/\/$/, '');
+    if (v && !out.includes(v)) out.push(v);
+  };
+
+  // 1) Absolute API host from env (e.g. http://192.168.1.249:3001)
+  if (!configured.startsWith('/')) {
+    try {
+      add(new URL(configured).origin);
+    } catch {
+      add(stripApiSuffix(configured));
+    }
+  }
+
+  // 2) Direct API port on current host — Nest serves /realtime here
+  add(`${protocol}//${hostname}:${DEFAULT_API_PORT}`);
+
+  // 3) Same origin (Nginx / Next rewrite) — only when not on bare Next :3000
+  //    Next itself does not speak Socket.IO unless rewritten.
+  if (port !== '3000') {
+    add(origin);
+  }
+
+  // 4) Localhost API when browsing localhost Next
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    add(`http://127.0.0.1:${DEFAULT_API_PORT}`);
+    add(`http://localhost:${DEFAULT_API_PORT}`);
+  }
+
+  return out;
+}
+
+/** Primary realtime origin (first candidate). */
+export function resolveRealtimeOrigin(): string {
+  const list = resolveRealtimeOriginCandidates();
+  if (list.length) return list[0];
+  if (typeof window !== 'undefined') return window.location.origin;
+  return stripApiSuffix(DEFAULT_API);
 }

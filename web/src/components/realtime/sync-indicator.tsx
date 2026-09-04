@@ -10,7 +10,7 @@ const LABELS = {
 } as const;
 
 export function SyncIndicator({ className }: { className?: string }) {
-  const { status, syncing } = useRealtime();
+  const { status, syncing, lastError } = useRealtime();
 
   const dotClass =
     status === 'connected'
@@ -19,6 +19,11 @@ export function SyncIndicator({ className }: { className?: string }) {
         ? 'bg-amber-400 animate-pulse'
         : 'bg-red-500';
 
+  const title =
+    status === 'disconnected' && lastError
+      ? `${LABELS.disconnected}\n${lastError}`
+      : LABELS[status];
+
   return (
     <div
       className={cn(
@@ -26,7 +31,7 @@ export function SyncIndicator({ className }: { className?: string }) {
         syncing && 'ring-1 ring-emerald-400/50',
         className,
       )}
-      title={LABELS[status]}
+      title={title}
     >
       <span className={cn('h-2 w-2 shrink-0 rounded-full', dotClass)} />
       <span className="max-w-[8rem] truncate">

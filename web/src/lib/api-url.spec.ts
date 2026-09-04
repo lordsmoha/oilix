@@ -4,6 +4,7 @@ import {
   normalizeApiUrl,
   resolveApiBaseUrl,
   resolveRealtimeOrigin,
+  resolveRealtimeOriginCandidates,
 } from './api-url.ts';
 
 describe('normalizeApiUrl', () => {
@@ -31,6 +32,8 @@ describe('resolveApiBaseUrl', () => {
 
   afterEach(() => {
     process.env.NEXT_PUBLIC_API_URL = originalEnv;
+    // @ts-expect-error cleanup
+    delete globalThis.window;
   });
 
   function mockLocation(hostname: string, port = '', protocol = 'http:') {
@@ -39,6 +42,7 @@ describe('resolveApiBaseUrl', () => {
         location: {
           hostname,
           port,
+          protocol,
           origin: `${protocol}//${hostname}${port ? `:${port}` : ''}`,
         },
       },
@@ -77,9 +81,20 @@ describe('resolveApiBaseUrl', () => {
     assert.equal(resolveApiBaseUrl(), '/api/v1');
   });
 
-  it('resolves realtime origin from relative api base', () => {
+  it('resolves realtime origin preferring API :3001 on Next :3000', () => {
+    process.env.NEXT_PUBLIC_API_URL = '/api/v1';
+    mockLocation('192.168.1.249', '3000');
+    assert.equal(resolveRealtimeOrigin(), 'http://192.168.1.249:3001');
+    const candidates = resolveRealtimeOriginCandidates();
+    assert.ok(candidates.includes('http://192.168.1.249:3001'));
+    assert.ok(!candidates.includes('http://192.168.1.249:3000'));
+  });
+
+  it('includes page origin for Nginx (port 80) plus API :3001 fallback', () => {
     process.env.NEXT_PUBLIC_API_URL = '/api/v1';
     mockLocation('192.168.1.249');
-    assert.equal(resolveRealtimeOrigin(), 'http://192.168.1.249');
+    const candidates = resolveRealtimeOriginCandidates();
+    assert.ok(candidates.includes('http://192.168.1.249:3001'));
+    assert.ok(candidates.includes('http://192.168.1.249'));
   });
 });

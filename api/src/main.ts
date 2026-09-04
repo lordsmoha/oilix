@@ -2,6 +2,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { corsOriginOption } from './common/http/cors-origin';
 
 function assertJwtSecret() {
   const secret = process.env.JWT_SECRET?.trim() ?? '';
@@ -26,15 +27,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.setGlobalPrefix('api/v1');
-  const corsOrigins = process.env.CORS_ORIGIN?.split(',').map((s) => s.trim()).filter(Boolean);
   app.enableCors({
-    origin: corsOrigins?.length
-      ? corsOrigins
-      : [
-          'http://localhost:3000',
-          'http://localhost:8081',
-          'exp://localhost:8081',
-        ],
+    origin: corsOriginOption(),
     credentials: true,
   });
 
