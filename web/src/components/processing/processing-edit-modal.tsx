@@ -60,7 +60,7 @@ export function ProcessingEditModal({
         <div className={`bg-gradient-to-l px-6 py-5 text-white ${accentGradient}`}>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm opacity-90">{isEdit ? 'تعديل العصر' : 'تسجيل العصر'}</p>
+              <p className="text-sm opacity-90">{isEdit ? 'تعديل التصفية' : 'تسجيل التصفية'}</p>
               <h2 className="text-xl font-bold">
                 #{referenceNumber} — {clientName}
               </h2>

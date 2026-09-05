@@ -29,7 +29,7 @@ export class ClientBoardQueryDto {
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional({ description: 'عمليات غير معالجة فقط (للعصر)' })
+  @ApiPropertyOptional({ description: 'عمليات غير معالجة فقط (للتصفية)' })
   @IsOptional()
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()

@@ -52,7 +52,7 @@ export default function WorkspaceSelectPage() {
           <h2 className="text-2xl font-black">المعصرة</h2>
           <p className="mt-1 text-sm text-[var(--app-text-dim)]">Gestion de l&apos;huilerie</p>
           <p className="mt-3 text-sm text-[var(--app-text-muted)]">
-            استقبال الزيتون، العصر، التصفية، المالية
+            استقبال الزيتون، التصفية، المالية
           </p>
         </button>
 

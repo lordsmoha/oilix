@@ -368,8 +368,14 @@ sudo ufw allow 80/tcp
 ## 13. Mises à jour du projet
 
 ```bash
+cd 'E:\Projects\Web\Oilix\'
+git status
+git add .
+git commit -m "S"
+git push
+
 cd /home/oilixu/oilix
-git pull   # ou recopier les fichiers
+git pull  
 
 cd api
 npm ci

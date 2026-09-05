@@ -26,7 +26,7 @@ export const PROCESSING_THEMES: Record<string, ProcessingTheme> = {
   green: {
     slug: 'green',
     label: 'الزيتون الأخضر',
-    subtitle: 'معالجة وعصر الزيتون الأخضر — جدول مرحي',
+    subtitle: 'معالجة وتصفية الزيتون الأخضر — جدول مرحي',
     icon: '🫒',
     headerGradient: 'from-emerald-800 via-emerald-600 to-teal-500',
     headerGlow: 'shadow-emerald-600/30',
@@ -52,7 +52,7 @@ export const PROCESSING_THEMES: Record<string, ProcessingTheme> = {
   zbouch: {
     slug: 'zbouch',
     label: 'الزبوش',
-    subtitle: 'معالجة وعصر زيتون الزبوش',
+    subtitle: 'معالجة وتصفية زيتون الزبوش',
     icon: '🌿',
     headerGradient: 'from-blue-800 via-blue-600 to-indigo-500',
     headerGlow: 'shadow-blue-600/30',
@@ -78,7 +78,7 @@ export const PROCESSING_THEMES: Record<string, ProcessingTheme> = {
   ripe: {
     slug: 'ripe',
     label: 'الزيتون الطايب',
-    subtitle: 'معالجة وعصر الزيتون الطايب — جدول مرحي',
+    subtitle: 'معالجة وتصفية الزيتون الطايب — جدول مرحي',
     icon: '🍇',
     headerGradient: 'from-rose-800 via-rose-600 to-amber-500',
     headerGlow: 'shadow-rose-600/30',

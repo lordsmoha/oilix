@@ -133,7 +133,7 @@ export default function PressingPage() {
       qc.invalidateQueries({ queryKey: ['processing-board'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       setFormClientId('');
-      toast.success('تم تسجيل العصر');
+      toast.success('تم تسجيل التصفية');
     },
     onError: () => toast.error('حدث خطأ'),
   });
@@ -204,11 +204,11 @@ export default function PressingPage() {
           glow="shadow-amber-800/25"
           patternClass="olive-add-hero-pattern"
           icon={<Droplets className="h-7 w-7 text-white" />}
-          title="العصر والتصفية"
-          subtitle={`تسجيل نتائج العصر · ${rows.length} زبون · سطر واحد لكل زبون`}
+          title="تصفية الزيت"
+          subtitle={`تسجيل نتائج التصفية · ${rows.length} زبون · سطر واحد لكل زبون`}
         />
 
-      <Card title={readOnly ? 'تسجيل عصر (معطّل — أرشيف)' : 'تسجيل عصر جديد'}>
+      <Card title={readOnly ? 'تسجيل تصفية (معطّل — أرشيف)' : 'تسجيل تصفية جديد'}>
         <form onSubmit={onSubmit} className="grid gap-4 md:grid-cols-2">
           <fieldset disabled={readOnly} className="contents disabled:opacity-60">
           <div className="md:col-span-2">
@@ -223,7 +223,7 @@ export default function PressingPage() {
             />
             {formClient && formClient.entryCount > 1 && (
               <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
-                يوجد {formClient.entryCount} عمليات وزن — يُسجَّل العصر على آخر عملية
+                يوجد {formClient.entryCount} عمليات وزن — تُسجَّل التصفية على آخر عملية
               </p>
             )}
             {!readOnly && (untreatedClients?.length ?? 0) === 0 ? (
@@ -266,7 +266,7 @@ export default function PressingPage() {
         </form>
       </Card>
 
-      <Card title="سجل العصر (مجموع حسب الزبون)">
+      <Card title="سجل التصفية (مجموع حسب الزبون)">
         <div className="mb-3 space-y-3">
           <TableSearchToolbar
             fields={[
@@ -341,7 +341,7 @@ export default function PressingPage() {
                     <td className="px-3 py-3">
                       {r.clientName}
                       {r.pressingCount > 1 && (
-                        <span className="mr-1 text-xs text-stone-500">({r.pressingCount} عصر)</span>
+                        <span className="mr-1 text-xs text-stone-500">({r.pressingCount} تصفية)</span>
                       )}
                     </td>
                     <td className="px-3 py-3 tabular-nums text-stone-600">

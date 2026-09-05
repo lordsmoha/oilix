@@ -54,7 +54,7 @@ export const FIELD_LABELS = {
   capacity: 'السعة',
   wilaya: 'الولاية',
   commune: 'البلدية / الدائرة',
-  zayat: 'الزيات (نوع/منطقة العصر)',
+  zayat: 'الزيات (نوع/منطقة التصفية)',
   registerClient: 'تسجيل الزبون',
   addWeight: 'إضافة وزن آخر',
   bagUnit: 'كيس',

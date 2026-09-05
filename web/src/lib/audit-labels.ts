@@ -6,7 +6,7 @@ export const AUDIT_MODULE_LABELS: Record<string, string> = {
   clients: 'الزبائن',
   olive: 'استقبال الزيتون',
   processing: 'المعالجة',
-  pressing: 'العصر / الاستخراج',
+  pressing: 'التصفية',
   payments: 'المدفوعات',
   finance: 'المالية',
   settings: 'الإعدادات',

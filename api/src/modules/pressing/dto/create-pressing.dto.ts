@@ -67,7 +67,7 @@ export class CreatePressingDto {
   @IsString()
   notes?: string;
 
-  /** يحدد صياغة سجل النشاط (معالجة أم عصر) — لا يُخزَّن */
+  /** يحدد صياغة سجل النشاط (معالجة أم تصفية) — لا يُخزَّن */
   @ApiPropertyOptional({ enum: PressingAuditContext })
   @IsOptional()
   @IsEnum(PressingAuditContext)

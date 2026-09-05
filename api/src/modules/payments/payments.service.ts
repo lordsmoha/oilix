@@ -43,7 +43,7 @@ export class PaymentsService {
         where: { id: dto.pressingRecordId },
         include: { payments: true },
       });
-      if (!pressing) throw new NotFoundException('سجل العصر غير موجود');
+      if (!pressing) throw new NotFoundException('سجل التصفية غير موجود');
 
       const paidSoFar = money(
         pressing.payments.reduce((s, p) => s + Number(p.amount), 0),

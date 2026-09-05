@@ -72,7 +72,7 @@ export default function DashboardPage() {
             </span>
           }
           title={data?.companyName ?? BUSINESS_NAME}
-          subtitle="متابعة الاستقبال والعصر والإيرادات"
+          subtitle="متابعة الاستقبال والتصفية والإيرادات"
           actions={
             <Link
               href="/settings"
@@ -121,7 +121,7 @@ export default function DashboardPage() {
                     التعريفة الحالية
                   </p>
                   <p className="text-sm text-stone-600 dark:text-stone-400">
-                    التعريفة المعتمدة للعصر
+                    التعريفة المعتمدة للتصفية
                   </p>
                 </div>
               </div>

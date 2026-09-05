@@ -78,7 +78,7 @@ export const APP_NAV: NavSection[] = [
       },
       {
         href: '/pressing',
-        label: 'العصر (حسب الزبون)',
+        label: 'تصفية الزيت',
         icon: Droplets,
         match: ['/pressing'],
       },

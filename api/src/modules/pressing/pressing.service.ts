@@ -598,7 +598,7 @@ export class PressingService {
         payments: true,
       },
     });
-    if (!record) throw new NotFoundException('سجل العصر غير موجود');
+    if (!record) throw new NotFoundException('سجل التصفية غير موجود');
     return record;
   }
 
@@ -622,13 +622,13 @@ export class PressingService {
       throw new BadRequestException('العملية ملغاة');
     }
     if (PRESSED.includes(entry.status)) {
-      throw new BadRequestException('تم عصر هذه العملية مسبقاً');
+      throw new BadRequestException('تم تسجيل تصفية هذه العملية مسبقاً');
     }
 
     const existing = await this.prisma.pressingRecord.findUnique({
       where: { oliveEntryId: data.oliveEntryId },
     });
-    if (existing) throw new BadRequestException('سجل العصر موجود مسبقاً');
+    if (existing) throw new BadRequestException('سجل التصفية موجود مسبقاً');
 
     const { pendingIds, totalWeightKg } = await this.pendingWeightForClient(
       entry.clientId,
@@ -636,7 +636,7 @@ export class PressingService {
       entry.oliveType,
     );
     if (!pendingIds.includes(data.oliveEntryId)) {
-      throw new BadRequestException('هذه الوزنة غير قابلة للعصر');
+      throw new BadRequestException('هذه الوزنة غير قابلة للتصفية');
     }
 
     const amount = await this.computeAmount(totalWeightKg);
@@ -721,7 +721,7 @@ export class PressingService {
         clientId: client.id,
       },
       userId,
-      isExtraction ? 'بدء العصر' : 'بدء المعالجة',
+      isExtraction ? 'بدء التصفية' : 'بدء المعالجة',
       isExtraction ? REALTIME_ENTITIES.PRESSING : REALTIME_ENTITIES.PROCESSING,
     );
 

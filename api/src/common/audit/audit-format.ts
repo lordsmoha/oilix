@@ -18,7 +18,7 @@ export const MODULE_LABELS_AR: Record<string, string> = {
   [AUDIT_MODULES.CLIENTS]: 'الزبائن',
   [AUDIT_MODULES.OLIVE]: 'استقبال الزيتون',
   [AUDIT_MODULES.PROCESSING]: 'المعالجة',
-  [AUDIT_MODULES.PRESSING]: 'العصر / الاستخراج',
+  [AUDIT_MODULES.PRESSING]: 'التصفية',
   [AUDIT_MODULES.PAYMENTS]: 'المدفوعات',
   [AUDIT_MODULES.FINANCE]: 'المالية',
   [AUDIT_MODULES.SETTINGS]: 'الإعدادات',
@@ -150,7 +150,7 @@ export const processing = {
   },
 };
 
-/** العصر / الاستخراج */
+/** التصفية / الاستخراج */
 export const extraction = {
   start(params: {
     client: ClientLike;
@@ -158,7 +158,7 @@ export const extraction = {
     oilL: number;
     amount: number;
   }) {
-    return `بدأ استخراج/عصر الزيتون للزبون ${clientLabel(params.client)} — مرجع #${params.reference} — ${formatNum(params.oilL, 1)} ل · ${formatNum(params.amount)} دج`;
+    return `بدأ تصفية الزيتون للزبون ${clientLabel(params.client)} — مرجع #${params.reference} — ${formatNum(params.oilL, 1)} ل · ${formatNum(params.amount)} دج`;
   },
   update(params: {
     client: ClientLike;
@@ -166,12 +166,12 @@ export const extraction = {
     changes: FieldChange[];
   }) {
     return withChanges(
-      `عدّل بيانات الاستخراج للزبون ${clientLabel(params.client)} (مرجع #${params.reference})`,
+      `عدّل بيانات التصفية للزبون ${clientLabel(params.client)} (مرجع #${params.reference})`,
       params.changes,
     );
   },
   validate(params: { client: ClientLike; reference: number }) {
-    return `أكّد/تحقّق من استخراج الزبون ${clientLabel(params.client)} — مرجع #${params.reference}`;
+    return `أكّد/تحقّق من تصفية الزبون ${clientLabel(params.client)} — مرجع #${params.reference}`;
   },
   cancel(params: {
     client: ClientLike;
@@ -179,7 +179,7 @@ export const extraction = {
     reason?: string;
   }) {
     const r = params.reason ? ` — ${params.reason}` : '';
-    return `ألغى استخراج الزبون ${clientLabel(params.client)} — مرجع #${params.reference}${r}`;
+    return `ألغى تصفية الزبون ${clientLabel(params.client)} — مرجع #${params.reference}${r}`;
   },
 };
 

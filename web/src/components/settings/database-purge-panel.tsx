@@ -85,7 +85,7 @@ export function DatabasePurgePanel() {
             <div className="space-y-2 text-sm text-red-950 dark:text-red-100">
               <p className="font-bold">تفريغ كامل لقاعدة البيانات</p>
               <ul className="list-inside list-disc space-y-1 text-red-900/90 dark:text-red-200/90">
-                <li>حذف جميع الزبائن، الأوزان، العمليات، العصر، المدفوعات والمواسم</li>
+                <li>حذف جميع الزبائن، الأوزان، العمليات، التصفية، المدفوعات والمواسم</li>
                 <li>حذف مبيعات الزيت، المخزون، والجرد المرتبط بالموسم</li>
                 <li>حذف السجل والإشعارات والإحصائيات المحفوظة</li>
                 <li>حذف جميع حسابات المستخدمين ما عدا المدير</li>

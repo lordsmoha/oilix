@@ -10,7 +10,7 @@ import { BUSINESS_NAME } from '@/lib/labels';
 import { useWorkspaceStore } from '@/lib/workspace-store';
 
 const MILL_FEATURES = [
-  { icon: Leaf, text: 'إدارة الزيتون والعصر' },
+  { icon: Leaf, text: 'إدارة الزيتون والتصفية' },
   { icon: TrendingUp, text: 'اليومية المالية' },
   { icon: Shield, text: 'صلاحيات آمنة للمستخدمين' },
 ];
@@ -50,7 +50,7 @@ function LoginInner() {
           <p className="mt-4 max-w-md text-base leading-relaxed text-emerald-100/85">
             {sales
               ? 'نقطة بيع الزيت، المخزون، الزبائن والتقارير — مساحة مستقلة عن إدارة المعصرة.'
-              : 'منصة حديثة لإدارة الاستقبال، المعالجة، والعصر — كل ما تحتاجه معصرتك في مكان واحد.'}
+              : 'منصة حديثة لإدارة الاستقبال، المعالجة، والتصفية — كل ما تحتاجه معصرتك في مكان واحد.'}
           </p>
         </div>
 

@@ -24,7 +24,7 @@ import {
 import { ProcessingQueryDto } from './dto/processing-query.dto';
 import { PressingService } from './pressing.service';
 
-@ApiTags('العصر والتصفية')
+@ApiTags('تصفية الزيت')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('pressing')
@@ -33,21 +33,21 @@ export class PressingController {
 
   @Get('board')
   @RequirePermissions(Permission.PRESSING_READ)
-  @ApiOperation({ summary: 'جدول المعالجة (العصر)' })
+  @ApiOperation({ summary: 'جدول المعالجة (التصفية)' })
   board(@Query() query: ProcessingQueryDto) {
     return this.pressingService.findProcessingBoard(query);
   }
 
   @Get('by-client')
   @RequirePermissions(Permission.PRESSING_READ)
-  @ApiOperation({ summary: 'سجلات العصر مجمّعة حسب الزبون' })
+  @ApiOperation({ summary: 'سجلات التصفية مجمّعة حسب الزبون' })
   findByClient(@Query() query: PressingQueryDto) {
     return this.pressingService.findAllByClient(query);
   }
 
   @Get()
   @RequirePermissions(Permission.PRESSING_READ)
-  @ApiOperation({ summary: 'سجلات العصر' })
+  @ApiOperation({ summary: 'سجلات التصفية' })
   findAll(@Query() query: PressingQueryDto) {
     return this.pressingService.findAll(query);
   }

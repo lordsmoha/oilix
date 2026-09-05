@@ -181,7 +181,7 @@ export default function SettingsPage() {
               إشعارات صوتية
             </h2>
             <p className="mt-1 text-sm text-stone-500">
-              تنبيه فوري عند الزبائن الجدد، الوزنات، المعالجة، العصر والموسم
+              تنبيه فوري عند الزبائن الجدد، الوزنات، المعالجة، التصفية والموسم
             </p>
           </div>
           <div className="p-5">
@@ -206,7 +206,7 @@ export default function SettingsPage() {
             <div className="flex gap-3 rounded-2xl border border-amber-200/80 bg-white/60 p-4 dark:border-amber-900/40 dark:bg-stone-900/40">
               <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" />
               <p className="text-sm text-amber-900/90 dark:text-amber-100/90">
-                يبدأ موسم جديد من الصفر: لا زبائن ولا عمليات ولا عصر — يُعاد ترقيم الزبائن والمراجع
+                يبدأ موسم جديد من الصفر: لا زبائن ولا عمليات ولا تصفية — يُعاد ترقيم الزبائن والمراجع
                 من 1. يمكن إعادة تسجيل نفس الأشخاص كزبائن جدد. المواسم السابقة تبقى للعرض فقط.
               </p>
             </div>

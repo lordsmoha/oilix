@@ -578,7 +578,7 @@ export class NotificationsService {
         ? NOTIFICATION_TYPES.WEB_PRESSING
         : NOTIFICATION_TYPES.WEB_PROCESSING,
 
-      title: isPressing ? 'عصر / استخراج (ويب)' : 'معالجة (ويب)',
+      title: isPressing ? 'تصفية الزيت (ويب)' : 'معالجة (ويب)',
 
       message,
 
