@@ -217,7 +217,16 @@ export default function PressingPage() {
   }
 
   function runSearch() {
-    searchNav.runSearch();
+    if (!searchActive) {
+      toast.message('أدخل معيار بحث');
+      return;
+    }
+    const id = searchNav.goFirst();
+    if (!id) {
+      toast.error('لا توجد نتائج');
+      return;
+    }
+    setTableSelectedId(id);
   }
 
   return (
