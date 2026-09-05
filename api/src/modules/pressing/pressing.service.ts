@@ -435,7 +435,11 @@ export class PressingService {
     const seasonId = await this.seasonScope.getSeasonId();
     const records = await this.prisma.pressingRecord.findMany({
       where: {
-        oliveEntry: { seasonId, deletedAt: null },
+        oliveEntry: {
+          seasonId,
+          deletedAt: null,
+          ...(query.oliveType ? { oliveType: query.oliveType } : {}),
+        },
         ...(query.dateFrom || query.dateTo
           ? {
               treatmentDate: {
@@ -485,6 +489,7 @@ export class PressingService {
         totalWeightKg: number;
         adhlefCount: number;
         capacity: number;
+        oliveType?: string;
       }
     >();
 
@@ -515,6 +520,7 @@ export class PressingService {
           totalWeightKg: 0,
           adhlefCount: 0,
           capacity: 0,
+          oliveType: r.oliveEntry.oliveType,
         });
         continue;
       }
@@ -532,7 +538,12 @@ export class PressingService {
     if (clientIds.length > 0) {
       const entrySums = await this.prisma.oliveEntry.groupBy({
         by: ['clientId'],
-        where: { seasonId, deletedAt: null, clientId: { in: clientIds } },
+        where: {
+          seasonId,
+          deletedAt: null,
+          clientId: { in: clientIds },
+          ...(query.oliveType ? { oliveType: query.oliveType } : {}),
+        },
         _sum: {
           bagCount: true,
           totalWeightKg: true,
@@ -561,7 +572,11 @@ export class PressingService {
     const seasonId = await this.seasonScope.getSeasonId();
     return this.prisma.pressingRecord.findMany({
       where: {
-        oliveEntry: { seasonId, deletedAt: null },
+        oliveEntry: {
+          seasonId,
+          deletedAt: null,
+          ...(query.oliveType ? { oliveType: query.oliveType } : {}),
+        },
         ...(query.dateFrom || query.dateTo
           ? {
               treatmentDate: {
@@ -580,6 +595,7 @@ export class PressingService {
             referenceNumber: true,
             totalWeightKg: true,
             status: true,
+            oliveType: true,
             client: { select: { firstName: true, lastName: true } },
           },
         },

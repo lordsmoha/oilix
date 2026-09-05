@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { OliveType } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
@@ -127,6 +128,11 @@ export class UpdatePressingDto {
 }
 
 export class PressingQueryDto {
+  @ApiPropertyOptional({ enum: OliveType })
+  @IsOptional()
+  @IsEnum(OliveType)
+  oliveType?: OliveType;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
