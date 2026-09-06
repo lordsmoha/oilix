@@ -19,7 +19,7 @@ import { formatNumber, formatMoney, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/lib/auth-store';
-import { openOilSaleReceipt } from '@/lib/oil-sale-receipt';
+import { openOilSaleClientReceipt } from '@/lib/oil-sale-receipt';
 import { useSeasonReadOnly } from '@/hooks/use-season-read-only';
 
 type Customer = { id: string; name: string; phone?: string | null; address?: string | null };
@@ -410,7 +410,7 @@ export default function NewSalePage() {
       void qc.invalidateQueries({ queryKey: ['oil-sales-list'] });
       void qc.invalidateQueries({ queryKey: ['oil-debts'] });
       void qc.invalidateQueries({ queryKey: ['oil-debts-summary'] });
-      if (print) openOilSaleReceipt(sale.id, { autoPrint: true });
+      if (print) openOilSaleClientReceipt(sale.id, { autoPrint: true });
       setLines([]);
       setLooseQty('');
       setContainerCount('1');

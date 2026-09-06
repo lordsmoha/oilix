@@ -11,7 +11,7 @@ import { formatNumber, formatMoney, formatDateTimeDz, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/lib/auth-store';
-import { OIL_SALE_DETAIL_PATH, openOilSaleReceipt } from '@/lib/oil-sale-receipt';
+import { OIL_SALE_DETAIL_PATH, openOilSaleReceipt, openOilSaleClientReceipt } from '@/lib/oil-sale-receipt';
 
 type Sale = {
   id: string;
@@ -235,15 +235,26 @@ export default function SalesHistoryPage() {
                   <td className="px-3 py-2">
                     <div className="flex gap-1">
                       {canOpenReceipt ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        title="طباعة الوصل"
-                        onClick={() => openOilSaleReceipt(s.id)}
-                      >
-                        <Printer className="h-3.5 w-3.5" />
-                      </Button>
+                        <>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            title="وصل تسليم للزبون"
+                            onClick={() => openOilSaleClientReceipt(s.id)}
+                          >
+                            <Printer className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            title="وصل مفصل"
+                            onClick={() => openOilSaleReceipt(s.id)}
+                          >
+                            وصل
+                          </Button>
+                        </>
                       ) : null}
                       {canCancel && s.status === 'COMPLETED' ? (
                         <Button

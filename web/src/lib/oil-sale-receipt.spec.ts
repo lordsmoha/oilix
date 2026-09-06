@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  OIL_SALE_CLIENT_RECEIPT_PATH,
   OIL_SALE_DETAIL_PATH,
   OIL_SALE_RECEIPT_API,
   OIL_SALE_RECEIPT_LEGACY_PATH,
   OIL_SALE_RECEIPT_PATH,
   isOilSaleId,
+  oilSaleClientReceiptHref,
   oilSaleReceiptHref,
   oilSaleReceiptHrefForSource,
 } from './oil-sale-receipt.ts';
@@ -39,6 +41,15 @@ describe('oil sale receipt routes', () => {
     assert.equal(oilSaleReceiptHrefForSource(saleId, 'direct-url'), `${OIL_SALE_RECEIPT_PATH}/${saleId}`);
     assert.equal(OIL_SALE_RECEIPT_PATH, '/oil-sale');
     assert.equal(OIL_SALE_RECEIPT_LEGACY_PATH, '/print/oil-sale');
+  });
+
+  it('client delivery slip resolves to /oil-sale-client/:id', () => {
+    assert.equal(OIL_SALE_CLIENT_RECEIPT_PATH, '/oil-sale-client');
+    assert.equal(oilSaleClientReceiptHref(saleId), `/oil-sale-client/${saleId}`);
+    assert.equal(
+      oilSaleClientReceiptHref(saleId, { autoPrint: true }),
+      `/oil-sale-client/${saleId}?print=1`,
+    );
   });
 
   it('rejects missing / invalid ids so callers cannot generate a 404 URL', () => {

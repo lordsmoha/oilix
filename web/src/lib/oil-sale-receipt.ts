@@ -6,11 +6,13 @@
  *
  * Wrong (404): `/print/oil-sale/:id`  — no App Router page exists there
  * Correct:      `/oil-sale/:id`       — `app/(print)/oil-sale/[id]/page.tsx`
+ * Client slip:  `/oil-sale-client/:id` — وصل تسليم للزبون
  *
  * Always pass the sale UUID (`sale.id`), never the receipt number.
  */
 
 export const OIL_SALE_RECEIPT_PATH = '/oil-sale';
+export const OIL_SALE_CLIENT_RECEIPT_PATH = '/oil-sale-client';
 
 /** Legacy URL used by older buttons — rewritten in next.config to the canonical path. */
 export const OIL_SALE_RECEIPT_LEGACY_PATH = '/print/oil-sale';
@@ -42,12 +44,35 @@ export function oilSaleReceiptHref(
   return base;
 }
 
+export function oilSaleClientReceiptHref(
+  saleId: string,
+  options?: { autoPrint?: boolean },
+): string {
+  const id = saleId?.trim();
+  if (!isOilSaleId(id)) {
+    throw new Error('INVALID_OIL_SALE_ID');
+  }
+  const base = `${OIL_SALE_CLIENT_RECEIPT_PATH}/${encodeURIComponent(id)}`;
+  if (options?.autoPrint) return `${base}?print=1`;
+  return base;
+}
+
 export function openOilSaleReceipt(
   saleId: string,
   options?: { autoPrint?: boolean },
 ): Window | null {
   if (typeof window === 'undefined') return null;
   const href = oilSaleReceiptHref(saleId, options);
+  return window.open(href, '_blank', 'noopener');
+}
+
+/** Client delivery slip (وصل تسليم) */
+export function openOilSaleClientReceipt(
+  saleId: string,
+  options?: { autoPrint?: boolean },
+): Window | null {
+  if (typeof window === 'undefined') return null;
+  const href = oilSaleClientReceiptHref(saleId, options);
   return window.open(href, '_blank', 'noopener');
 }
 

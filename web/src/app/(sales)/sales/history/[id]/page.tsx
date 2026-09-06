@@ -12,7 +12,7 @@ import { formatNumber, formatMoney, formatDateTimeDz } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/lib/auth-store';
-import { openOilSaleReceipt } from '@/lib/oil-sale-receipt';
+import { openOilSaleReceipt, openOilSaleClientReceipt } from '@/lib/oil-sale-receipt';
 import { useSeasonReadOnly } from '@/hooks/use-season-read-only';
 
 type SaleDetail = {
@@ -153,14 +153,25 @@ export default function SaleDetailPage({
           <p className="text-sm text-[var(--app-text-dim)]">{formatDateTimeDz(s.createdAt)}</p>
         </div>
         {canOpenReceipt ? (
-          <Button
-            type="button"
-            className="gap-2 bg-amber-700 hover:bg-amber-800"
-            onClick={() => openOilSaleReceipt(s.id)}
-          >
-            <Printer className="h-4 w-4" />
-            طباعة الوصل
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              className="gap-2 bg-amber-700 hover:bg-amber-800"
+              onClick={() => openOilSaleClientReceipt(s.id)}
+            >
+              <Printer className="h-4 w-4" />
+              وصل تسليم
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2"
+              onClick={() => openOilSaleReceipt(s.id)}
+            >
+              <Printer className="h-4 w-4" />
+              وصل مفصل
+            </Button>
+          </div>
         ) : null}
       </div>
 
