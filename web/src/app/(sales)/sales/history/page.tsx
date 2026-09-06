@@ -7,7 +7,7 @@ import { Printer, Ban } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { OIL_SOURCES, OIL_TYPES, oilMeta, oilSourceMeta } from '@/lib/sales-nav';
-import { formatNumber, formatDateTimeDz, cn } from '@/lib/utils';
+import { formatNumber, formatMoney, formatDateTimeDz, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/lib/auth-store';
@@ -195,10 +195,10 @@ export default function SalesHistoryPage() {
                   </td>
                   <td className="px-3 py-2 tabular-nums">{formatNumber(Number(s.quantityL), 1)}</td>
                   <td className="px-3 py-2 font-black tabular-nums">
-                    {formatNumber(Number(s.finalAmount), 0)}
+                    {formatMoney(Number(s.finalAmount))}
                   </td>
                   <td className="px-3 py-2 tabular-nums">
-                    {formatNumber(Number(s.amountPaid ?? s.finalAmount), 0)}
+                    {formatMoney(Number(s.amountPaid ?? s.finalAmount))}
                   </td>
                   <td
                     className={cn(
@@ -206,7 +206,7 @@ export default function SalesHistoryPage() {
                       remaining > 0 ? 'text-amber-800' : '',
                     )}
                   >
-                    {formatNumber(remaining, 0)}
+                    {formatMoney(remaining)}
                   </td>
                   <td className="px-3 py-2">
                     <span

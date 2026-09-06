@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { formatNumber, formatDateTimeDz } from '@/lib/utils';
+import { formatNumber, formatMoney, formatDateTimeDz } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/auth-store';
@@ -68,10 +68,10 @@ export default function DebtsPage() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Card label="إجمالي الديون" value={s ? formatNumber(s.totalDebt, 0) : '—'} unit="د.ج" />
+        <Card label="إجمالي الديون" value={s ? formatMoney(s.totalDebt) : '—'} unit="د.ج" />
         <Card label="عدد المدينين" value={s ? String(s.debtorsCount) : '—'} />
-        <Card label="محصّل اليوم" value={s ? formatNumber(s.collectedToday, 0) : '—'} unit="د.ج" />
-        <Card label="دين جديد اليوم" value={s ? formatNumber(s.newDebtToday, 0) : '—'} unit="د.ج" />
+        <Card label="محصّل اليوم" value={s ? formatMoney(s.collectedToday) : '—'} unit="د.ج" />
+        <Card label="دين جديد اليوم" value={s ? formatMoney(s.newDebtToday) : '—'} unit="د.ج" />
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -116,7 +116,7 @@ export default function DebtsPage() {
                 <td className="px-3 py-2 font-bold">{r.customer.name}</td>
                 <td className="px-3 py-2 text-xs">{r.customer.phone || '—'}</td>
                 <td className="px-3 py-2 font-black tabular-nums text-amber-800">
-                  {formatNumber(r.debt, 0)} د.ج
+                  {formatMoney(r.debt)} د.ج
                 </td>
                 <td className="px-3 py-2 tabular-nums">{r.unpaidSalesCount}</td>
                 <td className="px-3 py-2 text-xs">

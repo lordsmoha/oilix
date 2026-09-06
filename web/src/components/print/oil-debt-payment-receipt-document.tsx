@@ -23,7 +23,7 @@ export type OilDebtPaymentReceiptPayload = {
 };
 
 function money(n: string | number) {
-  return formatNumber(Number(n), 0);
+  return formatNumber(Number(n), 2);
 }
 
 export function OilDebtPaymentReceiptDocument({

@@ -15,7 +15,7 @@ import {
   type OilTypeValue,
 } from '@/lib/sales-nav';
 import { previewSaleFromLines, type DraftSaleLine } from '@/lib/sales-math';
-import { formatNumber, cn } from '@/lib/utils';
+import { formatNumber, formatMoney, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/lib/auth-store';
@@ -913,7 +913,7 @@ export default function NewSalePage() {
                         <p className="text-xs tabular-nums">{avail} قطعة</p>
                         {c.unitPrice != null ? (
                           <p className="text-[11px]">
-                            {formatNumber(Number(c.unitPrice), 0)} د.ج
+                            {formatMoney(Number(c.unitPrice))} د.ج
                           </p>
                         ) : null}
                       </button>
@@ -937,8 +937,8 @@ export default function NewSalePage() {
                 </div>
                 {emptyLineTotal > 0 ? (
                   <p className="text-sm font-bold text-amber-900 dark:text-amber-300">
-                    {containerCount} × {formatNumber(emptyPrice, 0)} د.ج ={' '}
-                    {formatNumber(emptyLineTotal, 0)} د.ج — بدون زيت
+                    {containerCount} × {formatMoney(emptyPrice)} د.ج ={' '}
+                    {formatMoney(emptyLineTotal)} د.ج — بدون زيت
                   </p>
                 ) : null}
               </div>
@@ -950,9 +950,9 @@ export default function NewSalePage() {
             preview &&
             preview.quantityL > 0 ? (
               <p className="text-xs font-bold text-amber-900 dark:text-amber-300">
-                مساعدة اللتر: {formatNumber(Number(assistancePerLitre || 0), 0)} دج ×{' '}
+                مساعدة اللتر: {formatMoney(Number(assistancePerLitre || 0))} دج ×{' '}
                 {formatNumber(preview.quantityL, 1)} لتر ={' '}
-                {formatNumber(preview.assistancePerLitreTotal, 0)} دج
+                {formatMoney(preview.assistancePerLitreTotal)} دج
               </p>
             ) : null}
 
@@ -973,7 +973,7 @@ export default function NewSalePage() {
                       {l.kind === 'CONTAINER'
                         ? `${oilSourceMeta(l.oilSource ?? oilSource).emoji} ${oilMeta(l.oilType ?? oilType).shortLabel} · ${l.containerCount} × ${l.containerName} = ${formatNumber((l.capacityL ?? 0) * (l.containerCount ?? 0), 1)} لتر`
                         : l.kind === 'CONTAINER_ONLY'
-                          ? `${l.containerCount} × ${l.containerName} = ${formatNumber((l.containerCount ?? 0) * l.unitPrice, 0)} د.ج`
+                          ? `${l.containerCount} × ${l.containerName} = ${formatMoney((l.containerCount ?? 0) * l.unitPrice)} د.ج`
                           : `${oilSourceMeta(l.oilSource ?? oilSource).emoji} ${oilMeta(l.oilType ?? oilType).shortLabel} · ${formatNumber(l.quantityL ?? 0, 1)} لتر`}
                     </span>
                     <button
@@ -1005,24 +1005,24 @@ export default function NewSalePage() {
                 )}
                 <SummaryLine
                   label="المبلغ الإجمالي"
-                  value={`${formatNumber(preview.grossAmount, 0)} د.ج`}
+                  value={`${formatMoney(preview.grossAmount)} د.ج`}
                 />
                 {canAssistPerLitre ? (
                   <SummaryLine
                     label="مساعدة اللتر"
-                    value={`− ${formatNumber(preview.assistancePerLitreTotal, 0)} د.ج`}
+                    value={`− ${formatMoney(preview.assistancePerLitreTotal)} د.ج`}
                   />
                 ) : null}
                 {canAssistFixed ? (
                   <SummaryLine
                     label="مساعدة ثابتة"
-                    value={`− ${formatNumber(preview.assistanceFixed, 0)} د.ج`}
+                    value={`− ${formatMoney(preview.assistanceFixed)} د.ج`}
                   />
                 ) : null}
                 <div className="border-t border-[var(--app-border)] pt-1.5">
                   <SummaryLine
                     label="إجمالي المساعدات"
-                    value={`− ${formatNumber(preview.totalAssistance, 0)} د.ج`}
+                    value={`− ${formatMoney(preview.totalAssistance)} د.ج`}
                   />
                 </div>
                 <div className="mt-3 flex items-center justify-between rounded-xl border border-emerald-600/25 bg-emerald-50 px-4 py-3 dark:border-emerald-500/30 dark:bg-emerald-950/30">
@@ -1030,7 +1030,7 @@ export default function NewSalePage() {
                     الصافي للدفع
                   </span>
                   <span className="text-2xl font-black tabular-nums text-emerald-800 dark:text-emerald-300">
-                    {formatNumber(preview.finalAmount, 0)} د.ج
+                    {formatMoney(preview.finalAmount)} د.ج
                   </span>
                 </div>
               </dl>
@@ -1083,8 +1083,8 @@ export default function NewSalePage() {
                 />
               ) : null}
               <dl className="space-y-1.5 text-sm">
-                <SummaryLine label="الصافي" value={`${formatNumber(preview.finalAmount, 0)} د.ج`} />
-                <SummaryLine label="المدفوع الآن" value={`${formatNumber(paidNow, 0)} د.ج`} />
+                <SummaryLine label="الصافي" value={`${formatMoney(preview.finalAmount)} د.ج`} />
+                <SummaryLine label="المدفوع الآن" value={`${formatMoney(paidNow)} د.ج`} />
                 <div
                   className={cn(
                     'mt-2 flex items-center justify-between rounded-xl border px-4 py-3',
@@ -1095,7 +1095,7 @@ export default function NewSalePage() {
                 >
                   <span className="font-black">المتبقي على الزبون</span>
                   <span className="text-xl font-black tabular-nums">
-                    {formatNumber(remainingDebt, 0)} د.ج
+                    {formatMoney(remainingDebt)} د.ج
                   </span>
                 </div>
               </dl>

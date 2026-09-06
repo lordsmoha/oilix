@@ -4,7 +4,7 @@ import { FormEvent, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
-import { formatNumber, formatDateTimeDz } from '@/lib/utils';
+import { formatNumber, formatMoney, formatDateTimeDz } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/lib/auth-store';
@@ -151,7 +151,7 @@ export default function CashRegisterPage() {
               <Input label="ملاحظة الإغلاق" value={closeNote} onChange={(e) => setCloseNote(e.target.value)} />
               {diffPreview != null ? (
                 <p className="sm:col-span-2 text-sm font-bold">
-                  الفرق: {formatNumber(diffPreview, 0)} د.ج
+                  الفرق: {formatMoney(diffPreview)} د.ج
                   {diffPreview === 0 ? ' (متوازن)' : diffPreview > 0 ? ' (فائض)' : ' (عجز)'}
                 </p>
               ) : null}
@@ -198,9 +198,9 @@ export default function CashRegisterPage() {
                 {s.status === 'OPEN' ? 'مفتوح' : 'مغلق'}
               </span>
               <span>
-                مبيعات {formatNumber(s.cashSales, 0)} د.ج
+                مبيعات {formatMoney(s.cashSales)} د.ج
                 {s.difference != null
-                  ? ` · فرق ${formatNumber(s.difference, 0)} ${s.variance ? VAR_AR[s.variance] : ''}`
+                  ? ` · فرق ${formatMoney(s.difference)} ${s.variance ? VAR_AR[s.variance] : ''}`
                   : ''}
               </span>
             </li>
@@ -216,7 +216,7 @@ function Row({ label, value, emphasize }: { label: string; value: number; emphas
     <div className="flex justify-between gap-3">
       <dt className="text-[var(--app-text-dim)]">{label}</dt>
       <dd className={emphasize ? 'font-black tabular-nums' : 'tabular-nums font-semibold'}>
-        {formatNumber(value, 0)} د.ج
+        {formatMoney(value)} د.ج
       </dd>
     </div>
   );

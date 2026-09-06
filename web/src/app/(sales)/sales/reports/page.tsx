@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Printer } from 'lucide-react';
 import { api } from '@/lib/api';
 import { OIL_SOURCES, OIL_TYPES, oilMeta, oilSourceMeta } from '@/lib/sales-nav';
-import { formatNumber } from '@/lib/utils';
+import { formatNumber, formatMoney } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/auth-store';
@@ -253,16 +253,16 @@ export default function SalesReportsPage() {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Card label="عدد البيوع" value={String(s?.count ?? '—')} />
         <Card label="اللترات" value={s ? formatNumber(s.litres, 1) : '—'} />
-        <Card label="الإيراد الإجمالي" value={s ? formatNumber(s.gross, 0) : '—'} unit="د.ج" />
-        <Card label="صافي الإيراد" value={s ? formatNumber(s.net, 0) : '—'} unit="د.ج" emphasize />
+        <Card label="الإيراد الإجمالي" value={s ? formatMoney(s.gross) : '—'} unit="د.ج" />
+        <Card label="صافي الإيراد" value={s ? formatMoney(s.net) : '—'} unit="د.ج" emphasize />
         <Card
           label="إيراد الزيت"
-          value={s?.oilRevenue != null ? formatNumber(s.oilRevenue, 0) : '—'}
+          value={s?.oilRevenue != null ? formatMoney(s.oilRevenue) : '—'}
           unit="د.ج"
         />
         <Card
           label="إيراد الضلف الفارغة"
-          value={s?.containerRevenue != null ? formatNumber(s.containerRevenue, 0) : '—'}
+          value={s?.containerRevenue != null ? formatMoney(s.containerRevenue) : '—'}
           unit="د.ج"
         />
       </div>
@@ -271,27 +271,27 @@ export default function SalesReportsPage() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <Card
             label="صافي المبيعات"
-            value={formatNumber(reportQ.data.cashVsRevenue.netSales, 0)}
+            value={formatMoney(reportQ.data.cashVsRevenue.netSales)}
             unit="د.ج"
           />
           <Card
             label="نقد من مبيعات الفترة"
-            value={formatNumber(reportQ.data.cashVsRevenue.cashFromSales, 0)}
+            value={formatMoney(reportQ.data.cashVsRevenue.cashFromSales)}
             unit="د.ج"
           />
           <Card
             label="دين جديد (متبقي الفواتير)"
-            value={formatNumber(reportQ.data.cashVsRevenue.newDebt, 0)}
+            value={formatMoney(reportQ.data.cashVsRevenue.newDebt)}
             unit="د.ج"
           />
           <Card
             label="تسديدات ديون"
-            value={formatNumber(reportQ.data.cashVsRevenue.debtRepayments, 0)}
+            value={formatMoney(reportQ.data.cashVsRevenue.debtRepayments)}
             unit="د.ج"
           />
           <Card
             label="إجمالي النقد المحصّل"
-            value={formatNumber(reportQ.data.cashVsRevenue.cashCollected, 0)}
+            value={formatMoney(reportQ.data.cashVsRevenue.cashCollected)}
             unit="د.ج"
             emphasize
           />
@@ -301,11 +301,11 @@ export default function SalesReportsPage() {
       <div className="grid gap-3 sm:grid-cols-3">
         <Card
           label="مساعدة اللتر"
-          value={s ? formatNumber(s.assistancePerLitreTotal ?? 0, 0) : '—'}
+          value={s ? formatMoney(s.assistancePerLitreTotal ?? 0) : '—'}
           unit="د.ج"
         />
-        <Card label="مساعدة ثابتة" value={s ? formatNumber(s.assistanceFixed, 0) : '—'} unit="د.ج" />
-        <Card label="إجمالي المساعدات" value={s ? formatNumber(s.totalAssistance, 0) : '—'} unit="د.ج" />
+        <Card label="مساعدة ثابتة" value={s ? formatMoney(s.assistanceFixed) : '—'} unit="د.ج" />
+        <Card label="إجمالي المساعدات" value={s ? formatMoney(s.totalAssistance) : '—'} unit="د.ج" />
       </div>
 
       <section className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-4">
@@ -319,7 +319,7 @@ export default function SalesReportsPage() {
                   {src.emoji} {src.label}
                 </p>
                 <p className="mt-1 text-sm">
-                  {r.count} بيع · {formatNumber(r.litres, 1)} لتر · صافي {formatNumber(r.net, 0)} د.ج
+                  {r.count} بيع · {formatNumber(r.litres, 1)} لتر · صافي {formatMoney(r.net)} د.ج
                 </p>
               </div>
             );
@@ -354,7 +354,7 @@ export default function SalesReportsPage() {
                       {formatNumber(b.stock?.theoreticalQty ?? 0, 1)}
                     </td>
                     <td className="px-2 py-2 tabular-nums">{formatNumber(b.stock?.lossQty ?? 0, 1)}</td>
-                    <td className="px-2 py-2 tabular-nums">{formatNumber(b.net, 0)}</td>
+                    <td className="px-2 py-2 tabular-nums">{formatMoney(b.net)}</td>
                   </tr>
                 );
               })}
@@ -378,7 +378,7 @@ export default function SalesReportsPage() {
                   {formatNumber(t.total, 1)} لتر
                 </p>
                 <p className="mt-1 text-sm">
-                  {t.count} بيع · {formatNumber(t.litres, 1)} لتر · صافي {formatNumber(t.net, 0)} د.ج
+                  {t.count} بيع · {formatNumber(t.litres, 1)} لتر · صافي {formatMoney(t.net)} د.ج
                 </p>
               </div>
             );
@@ -397,7 +397,7 @@ export default function SalesReportsPage() {
                   {m.emoji} {m.label}
                 </p>
                 <p className="mt-1 text-sm">
-                  {t.count} بيع · {formatNumber(t.litres, 1)} لتر · صافي {formatNumber(t.net, 0)} د.ج
+                  {t.count} بيع · {formatNumber(t.litres, 1)} لتر · صافي {formatMoney(t.net)} د.ج
                 </p>
               </div>
             );
@@ -412,7 +412,7 @@ export default function SalesReportsPage() {
             <li key={u.userId} className="flex justify-between py-2">
               <span className="font-bold">{u.user?.firstName || u.user?.username || u.userId}</span>
               <span>
-                {u.count} بيع · {formatNumber(u.litres, 1)} لتر · {formatNumber(u.net, 0)} د.ج
+                {u.count} بيع · {formatNumber(u.litres, 1)} لتر · {formatMoney(u.net)} د.ج
               </span>
             </li>
           ))}
@@ -426,7 +426,7 @@ export default function SalesReportsPage() {
             <li key={r.cashRegisterId ?? 'legacy'} className="flex justify-between py-2">
               <span className="font-bold">{r.name || r.code || 'بدون جهاز (قديم)'}</span>
               <span>
-                {r.count} بيع · {formatNumber(r.litres, 1)} لتر · {formatNumber(r.net, 0)} د.ج
+                {r.count} بيع · {formatNumber(r.litres, 1)} لتر · {formatMoney(r.net)} د.ج
               </span>
             </li>
           ))}
@@ -440,7 +440,7 @@ export default function SalesReportsPage() {
             <li key={r.deviceId ?? 'legacy'} className="flex justify-between py-2">
               <span className="font-bold">{r.code || r.name || 'بدون جهاز (قديم)'}</span>
               <span>
-                {r.count} بيع · {formatNumber(r.litres, 1)} لتر · {formatNumber(r.net, 0)} د.ج
+                {r.count} بيع · {formatNumber(r.litres, 1)} لتر · {formatMoney(r.net)} د.ج
               </span>
             </li>
           ))}
@@ -481,7 +481,7 @@ export default function SalesReportsPage() {
             label="إيراد الضلف الفارغة"
             value={
               reportQ.data?.containerSales
-                ? formatNumber(reportQ.data.containerSales.emptyRevenue, 0)
+                ? formatMoney(reportQ.data.containerSales.emptyRevenue)
                 : '—'
             }
             unit="د.ج"

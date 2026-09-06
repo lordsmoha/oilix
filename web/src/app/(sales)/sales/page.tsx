@@ -13,7 +13,7 @@ import {
   type OilSourceValue,
   type OilTypeValue,
 } from '@/lib/sales-nav';
-import { formatNumber, formatDateTimeDz, cn } from '@/lib/utils';
+import { formatNumber, formatMoney, formatDateTimeDz, cn } from '@/lib/utils';
 import { useAuthStore } from '@/lib/auth-store';
 import { OIL_SALE_DETAIL_PATH } from '@/lib/oil-sale-receipt';
 
@@ -166,7 +166,7 @@ export default function SalesDashboardPage() {
               className="rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-4"
             >
               <p className="text-xs font-bold text-[var(--app-text-dim)]">{r.name}</p>
-              <p className="mt-1 text-xl font-black tabular-nums">{formatNumber(r.net, 0)} د.ج</p>
+              <p className="mt-1 text-xl font-black tabular-nums">{formatMoney(r.net)} د.ج</p>
               <p className="text-xs text-[var(--app-text-dim)]">
                 {r.count} بيع · {formatNumber(r.litres, 1)} لتر
               </p>
@@ -176,7 +176,7 @@ export default function SalesDashboardPage() {
             <div className="rounded-2xl border border-amber-700/30 bg-amber-50 p-4 dark:bg-amber-950/30">
               <p className="text-xs font-bold text-amber-800 dark:text-amber-400">كل الصناديق</p>
               <p className="mt-1 text-xl font-black tabular-nums">
-                {formatNumber(d.allRegistersToday.net, 0)} د.ج
+                {formatMoney(d.allRegistersToday.net)} د.ج
               </p>
               <p className="text-xs text-[var(--app-text-dim)]">
                 {d.allRegistersToday.count} بيع · {formatNumber(d.allRegistersToday.litres, 1)} لتر
@@ -191,13 +191,13 @@ export default function SalesDashboardPage() {
         <StatCard label="لترات اليوم" value={d ? formatNumber(d.today.litres, 1) : '—'} unit="لتر" />
         <StatCard
           label="صافي إيراد اليوم"
-          value={d ? formatNumber(d.today.net, 0) : '—'}
+          value={d ? formatMoney(d.today.net) : '—'}
           unit="د.ج"
           emphasize
         />
         <StatCard
           label="نقد محصّل اليوم"
-          value={d ? formatNumber(d.today.cashReceived ?? d.today.net, 0) : '—'}
+          value={d ? formatMoney(d.today.cashReceived ?? d.today.net) : '—'}
           unit="د.ج"
         />
       </div>
@@ -206,18 +206,18 @@ export default function SalesDashboardPage() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             label="إجمالي الديون"
-            value={formatNumber(d.debt.totalDebt, 0)}
+            value={formatMoney(d.debt.totalDebt)}
             unit="د.ج"
           />
           <StatCard label="عدد المدينين" value={String(d.debt.debtorsCount)} />
           <StatCard
             label="محصّل ديون اليوم"
-            value={formatNumber(d.debt.collectedToday, 0)}
+            value={formatMoney(d.debt.collectedToday)}
             unit="د.ج"
           />
           <StatCard
             label="دين جديد اليوم"
-            value={formatNumber(d.debt.newDebtToday, 0)}
+            value={formatMoney(d.debt.newDebtToday)}
             unit="د.ج"
           />
           <Link

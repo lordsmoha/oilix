@@ -5,7 +5,7 @@ import { FormEvent, use, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
-import { formatNumber, formatDateTimeDz } from '@/lib/utils';
+import { formatNumber, formatMoney, formatDateTimeDz } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/lib/auth-store';
@@ -77,7 +77,7 @@ export default function DebtorDetailPage({
       ).data as { id: string; remainingDebt: number; previousDebt: number; receiptNumber: number },
     onSuccess: (r) => {
       toast.success(
-        `تم التسديد — المتبقي ${formatNumber(r.remainingDebt, 0)} د.ج (كان ${formatNumber(r.previousDebt, 0)})`,
+        `تم التسديد — المتبقي ${formatMoney(r.remainingDebt)} د.ج (كان ${formatMoney(r.previousDebt)})`,
       );
       setAmount('');
       setNotes('');
@@ -125,9 +125,9 @@ export default function DebtorDetailPage({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="الدين الحالي" value={`${formatNumber(d.summary.debt, 0)} د.ج`} warn />
-        <Stat label="إجمالي المشتريات" value={`${formatNumber(d.summary.totalPurchases, 0)} د.ج`} />
-        <Stat label="المدفوع على الفواتير" value={`${formatNumber(d.summary.totalPaidOnSales, 0)} د.ج`} />
+        <Stat label="الدين الحالي" value={`${formatMoney(d.summary.debt)} د.ج`} warn />
+        <Stat label="إجمالي المشتريات" value={`${formatMoney(d.summary.totalPurchases)} د.ج`} />
+        <Stat label="المدفوع على الفواتير" value={`${formatMoney(d.summary.totalPaidOnSales)} د.ج`} />
         <Stat label="فواتير غير مسددة" value={String(d.summary.unpaidSalesCount)} />
       </div>
 
@@ -160,7 +160,7 @@ export default function DebtorDetailPage({
                 <option value="">توزيع تلقائي (FIFO)</option>
                 {d.outstandingSales.map((s) => (
                   <option key={s.id} value={s.id}>
-                    #{s.receiptNumber} — متبقي {formatNumber(Number(s.remainingAmount), 0)}
+                    #{s.receiptNumber} — متبقي {formatMoney(Number(s.remainingAmount))}
                   </option>
                 ))}
               </select>
@@ -195,10 +195,10 @@ export default function DebtorDetailPage({
                 <p className="text-xs text-[var(--app-text-dim)]">{formatDateTimeDz(s.saleDate)}</p>
               </div>
               <div className="text-left text-xs">
-                <p>صافي {formatNumber(Number(s.finalAmount), 0)}</p>
-                <p>مدفوع {formatNumber(Number(s.amountPaid), 0)}</p>
+                <p>صافي {formatMoney(Number(s.finalAmount))}</p>
+                <p>مدفوع {formatMoney(Number(s.amountPaid))}</p>
                 <p className="font-black text-amber-800">
-                  متبقي {formatNumber(Number(s.remainingAmount), 0)}
+                  متبقي {formatMoney(Number(s.remainingAmount))}
                 </p>
               </div>
             </li>
@@ -229,10 +229,10 @@ export default function DebtorDetailPage({
                   <td className="px-2 py-1 text-xs">
                     {ledgerLabel(e.type)} {e.reference || ''}
                   </td>
-                  <td className="px-2 py-1 tabular-nums">{formatNumber(Number(e.debit), 0)}</td>
-                  <td className="px-2 py-1 tabular-nums">{formatNumber(Number(e.credit), 0)}</td>
+                  <td className="px-2 py-1 tabular-nums">{formatMoney(Number(e.debit))}</td>
+                  <td className="px-2 py-1 tabular-nums">{formatMoney(Number(e.credit))}</td>
                   <td className="px-2 py-1 font-bold tabular-nums">
-                    {formatNumber(Number(e.balanceAfter), 0)}
+                    {formatMoney(Number(e.balanceAfter))}
                   </td>
                 </tr>
               ))}

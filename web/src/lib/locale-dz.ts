@@ -9,11 +9,19 @@ export const COUNTRY_NAME_AR = 'الجمهورية الجزائرية الديم
 export const PHONE_COUNTRY_CODE = '+213';
 export const PHONE_PLACEHOLDER = '05XX XX XX XX';
 
+/** Western digits: 1,234.56 (not ar-DZ 1.234,56) */
+const NUMBER_LOCALE = 'en-US';
+
 export function formatNumberDz(n: number, decimals = 2): string {
-  return new Intl.NumberFormat(LOCALE_DZ, {
+  return new Intl.NumberFormat(NUMBER_LOCALE, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  }).format(n);
+  }).format(Number.isFinite(n) ? n : 0);
+}
+
+/** Money amounts — always two decimals: 63,000.00 */
+export function formatMoneyDz(amount: number): string {
+  return formatNumberDz(amount, 2);
 }
 
 export function formatDateDz(d: string | Date): string {
@@ -56,6 +64,6 @@ export function formatDateTimeDz(d: string | Date = new Date()): string {
   }).format(new Date(d));
 }
 
-export function formatCurrencyDz(amount: number, decimals = 2): string {
-  return `${formatNumberDz(amount, decimals)} ${CURRENCY_SYMBOL}`;
+export function formatCurrencyDz(amount: number): string {
+  return `${formatMoneyDz(amount)} ${CURRENCY_SYMBOL}`;
 }

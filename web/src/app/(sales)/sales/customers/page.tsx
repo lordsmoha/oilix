@@ -4,7 +4,7 @@ import { FormEvent, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
-import { formatNumber } from '@/lib/utils';
+import { formatNumber, formatMoney } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/lib/auth-store';
@@ -139,7 +139,7 @@ export default function SalesCustomersPage() {
                   <p className="text-xs text-[var(--app-text-dim)]">{c.phone || '—'}</p>
                   {(c.debt ?? 0) > 0 ? (
                     <p className="mt-0.5 text-xs font-bold text-amber-800">
-                      دين {formatNumber(c.debt!, 0)} د.ج
+                      دين {formatMoney(c.debt!)} د.ج
                     </p>
                   ) : null}
                 </div>
@@ -226,16 +226,16 @@ export default function SalesCustomersPage() {
               </div>
               <div>
                 <dt className="text-[var(--app-text-dim)]">المساعدات</dt>
-                <dd className="font-black">{formatNumber(detailQ.data.totals.assistance, 0)} د.ج</dd>
+                <dd className="font-black">{formatMoney(detailQ.data.totals.assistance)} د.ج</dd>
               </div>
               <div>
                 <dt className="text-[var(--app-text-dim)]">الصافي</dt>
-                <dd className="font-black">{formatNumber(detailQ.data.totals.net, 0)} د.ج</dd>
+                <dd className="font-black">{formatMoney(detailQ.data.totals.net)} د.ج</dd>
               </div>
               <div>
                 <dt className="text-[var(--app-text-dim)]">المدفوع</dt>
                 <dd className="font-black">
-                  {formatNumber(detailQ.data.totals.paid ?? detailQ.data.totals.net, 0)} د.ج
+                  {formatMoney(detailQ.data.totals.paid ?? detailQ.data.totals.net)} د.ج
                 </dd>
               </div>
               <div>
@@ -243,7 +243,7 @@ export default function SalesCustomersPage() {
                 <dd
                   className={`font-black ${(detailQ.data.totals.debt ?? 0) > 0 ? 'text-amber-800' : ''}`}
                 >
-                  {formatNumber(detailQ.data.totals.debt ?? 0, 0)} د.ج
+                  {formatMoney(detailQ.data.totals.debt ?? 0)} د.ج
                 </dd>
               </div>
             </dl>

@@ -32,7 +32,7 @@ function n(v: number, decimals = 1) {
 }
 
 function money(v: number) {
-  return formatNumber(v, 0);
+  return formatNumber(v, 2);
 }
 
 function shortHeader(oilSource: string, oilType: string) {

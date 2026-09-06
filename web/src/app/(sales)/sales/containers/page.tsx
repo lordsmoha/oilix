@@ -4,7 +4,7 @@ import { FormEvent, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
-import { formatNumber, cn } from '@/lib/utils';
+import { formatNumber, formatMoney, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/lib/auth-store';
@@ -217,10 +217,10 @@ export default function SalesContainersPage() {
                 <td className="px-3 py-2 font-bold">{c.name}</td>
                 <td className="px-3 py-2 tabular-nums">{formatNumber(Number(c.capacityL), 0)} لتر</td>
                 <td className="px-3 py-2 tabular-nums">
-                  {c.unitPrice == null ? '—' : `${formatNumber(Number(c.unitPrice), 0)} د.ج`}
+                  {c.unitPrice == null ? '—' : `${formatMoney(Number(c.unitPrice))} د.ج`}
                 </td>
                 <td className="px-3 py-2 tabular-nums">
-                  {c.costPrice == null ? '—' : `${formatNumber(Number(c.costPrice), 0)} د.ج`}
+                  {c.costPrice == null ? '—' : `${formatMoney(Number(c.costPrice))} د.ج`}
                 </td>
                 <td className="px-3 py-2 tabular-nums font-black">{c.stock?.available ?? 0}</td>
                 <td className="px-3 py-2 tabular-nums">{c.minStock}</td>

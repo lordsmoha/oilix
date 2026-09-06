@@ -8,7 +8,7 @@ import { Printer } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { oilMeta, oilSourceMeta } from '@/lib/sales-nav';
-import { formatNumber, formatDateTimeDz } from '@/lib/utils';
+import { formatNumber, formatMoney, formatDateTimeDz } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/lib/auth-store';
@@ -87,7 +87,7 @@ export default function SaleDetailPage({
         })
       ).data as { id: string; remainingDebt: number },
     onSuccess: (r) => {
-      toast.success(`تم التسديد — المتبقي الإجمالي ${formatNumber(r.remainingDebt, 0)} د.ج`);
+      toast.success(`تم التسديد — المتبقي الإجمالي ${formatMoney(r.remainingDebt)} د.ج`);
       setPayAmount('');
       void qc.invalidateQueries({ queryKey: ['oil-sale', id] });
       void qc.invalidateQueries({ queryKey: ['oil-sales-list'] });
@@ -209,7 +209,7 @@ export default function SaleDetailPage({
                       ? `${item.containerCount} × ${item.containerName} (منتج)`
                       : `${formatNumber(Number(item.quantityL), 1)} لتر`}
                 </span>
-                <span className="tabular-nums">{formatNumber(Number(item.lineGross), 0)} د.ج</span>
+                <span className="tabular-nums">{formatMoney(Number(item.lineGross))} د.ج</span>
               </li>
             ))}
           </ul>
@@ -217,21 +217,21 @@ export default function SaleDetailPage({
         <p>
           إجمالي الزيت: <strong>{formatNumber(Number(s.quantityL), 1)} لتر</strong>
         </p>
-        <p>الإجمالي: {formatNumber(Number(s.grossAmount), 0)} د.ج</p>
+        <p>الإجمالي: {formatMoney(Number(s.grossAmount))} د.ج</p>
         {Number(s.assistancePerLitreTotal ?? 0) > 0 ? (
           <p>
-            مساعدة اللتر ({formatNumber(Number(s.assistancePerLitre ?? 0), 0)} دج/لتر):{' '}
-            {formatNumber(Number(s.assistancePerLitreTotal), 0)} د.ج
+            مساعدة اللتر ({formatMoney(Number(s.assistancePerLitre ?? 0))} دج/لتر):{' '}
+            {formatMoney(Number(s.assistancePerLitreTotal))} د.ج
           </p>
         ) : null}
         {Number(s.assistanceFixed) > 0 ? (
-          <p>مساعدة ثابتة: {formatNumber(Number(s.assistanceFixed), 0)} د.ج</p>
+          <p>مساعدة ثابتة: {formatMoney(Number(s.assistanceFixed))} د.ج</p>
         ) : null}
-        <p>إجمالي المساعدات: {formatNumber(Number(s.totalAssistance), 0)} د.ج</p>
-        <p className="text-lg font-black">الصافي: {formatNumber(Number(s.finalAmount), 0)} د.ج</p>
-        <p>المدفوع: {formatNumber(paid, 0)} د.ج</p>
+        <p>إجمالي المساعدات: {formatMoney(Number(s.totalAssistance))} د.ج</p>
+        <p className="text-lg font-black">الصافي: {formatMoney(Number(s.finalAmount))} د.ج</p>
+        <p>المدفوع: {formatMoney(paid)} د.ج</p>
         <p className={remaining > 0 ? 'font-black text-amber-800' : ''}>
-          المتبقي: {formatNumber(remaining, 0)} د.ج
+          المتبقي: {formatMoney(remaining)} د.ج
         </p>
         <p className="text-xs text-[var(--app-text-dim)]">العامل: {operator}</p>
       </div>
@@ -273,7 +273,7 @@ export default function SaleDetailPage({
                     {a.payment.cashRegisterName ? ` · ${a.payment.cashRegisterName}` : ''}
                   </p>
                 </div>
-                <span className="font-black tabular-nums">{formatNumber(Number(a.amount), 0)} د.ج</span>
+                <span className="font-black tabular-nums">{formatMoney(Number(a.amount))} د.ج</span>
               </li>
             ))}
           </ul>
