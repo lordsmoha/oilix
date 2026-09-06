@@ -277,7 +277,7 @@ export const PERMISSION_MATRIX: PermissionMatrixGroup[] = [
       { key: 'OIL_SALES_STOCK_VIEW', label: 'عرض' },
       { key: 'OIL_SALES_STOCK_ADD', label: 'إضافة' },
       { key: 'OIL_SALES_STOCK_ADJUST', label: 'تعديل / تصحيح' },
-      { key: 'OIL_SALES_STOCK_LOSS', label: 'عرض الخسارة' },
+      { key: 'OIL_SALES_STOCK_LOSS', label: 'عرض الفرق' },
       { key: 'OIL_SALES_STOCK_OVERRIDE', label: 'تجاوز المخزون' },
     ],
   },

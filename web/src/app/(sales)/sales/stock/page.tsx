@@ -109,9 +109,9 @@ export default function SalesStockPage() {
                     <dl className="grid grid-cols-2 gap-2 text-sm">
                       <Item label="المضاف" v={s.totalAdded} />
                       <Item label="المباع" v={s.totalSold} />
-                      <Item label="نظري" v={s.theoreticalQty} strong />
-                      <Item label="فعلي" v={s.physicalQty} />
-                      <Item label="خسارة" v={s.lossQty} />
+                      <Item label="المعروض" v={s.theoreticalQty} strong />
+                      <Item label="الباقي" v={s.physicalQty} />
+                      <Item label="الفرق" v={s.lossQty} />
                     </dl>
                   </div>
                 );

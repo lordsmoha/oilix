@@ -74,7 +74,7 @@ export default function SalesInventoryPage() {
         })
       ).data,
     onSuccess: () => {
-      toast.success('تم تأكيد الجرد — الكمية الفعلية أصبحت المخزون الحالي');
+      toast.success('تم تأكيد الجرد — كمية الباقي أصبحت المخزون الحالي');
       setPhysical('');
       setNote('');
       void qc.invalidateQueries({ queryKey: ['oil-sales-inventory'] });
@@ -89,7 +89,7 @@ export default function SalesInventoryPage() {
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (!validPhys) {
-      toast.error('أدخل الكمية الفعلية');
+      toast.error('أدخل كمية الباقي');
       return;
     }
     mut.mutate();
@@ -98,9 +98,9 @@ export default function SalesInventoryPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div>
-        <h1 className="text-2xl font-black">الجرد الفعلي</h1>
+        <h1 className="text-2xl font-black">جرد الباقي</h1>
         <p className="text-sm text-[var(--app-text-dim)]">
-          بعد التأكيد تصبح الكمية الفعلية هي المخزون الحالي لجميع العمليات القادمة
+          بعد التأكيد تصبح كمية الباقي هي المخزون الحالي لجميع العمليات القادمة
         </p>
       </div>
 
@@ -146,7 +146,7 @@ export default function SalesInventoryPage() {
 
           <div className="grid gap-3 sm:grid-cols-2">
             <Input
-              label="الكمية الفعلية (لتر)"
+              label="كمية الباقي (لتر)"
               inputMode="decimal"
               value={physical}
               onChange={(e) => setPhysical(e.target.value)}
@@ -158,7 +158,7 @@ export default function SalesInventoryPage() {
           {validPhys ? (
             <div className="space-y-1.5 rounded-xl border border-amber-700/30 bg-amber-50/60 p-4 text-sm dark:bg-amber-950/20">
               <Row label="المخزون قبل الجرد" value={`${formatNumber(theoretical, 1)} لتر`} />
-              <Row label="الكمية الفعلية" value={`${formatNumber(phys, 1)} لتر`} />
+              <Row label="كمية الباقي" value={`${formatNumber(phys, 1)} لتر`} />
               <Row
                 label="الفرق"
                 value={`${difference! >= 0 ? '+' : ''}${formatNumber(difference!, 1)} لتر`}
@@ -177,7 +177,7 @@ export default function SalesInventoryPage() {
                 />
               </div>
               <p className="mt-2 text-xs font-bold text-amber-900 dark:text-amber-300">
-                بتأكيد الجرد ستصبح الكمية الفعلية ({formatNumber(phys, 1)} لتر) هي المخزون الحالي
+                بتأكيد الجرد ستصبح كمية الباقي ({formatNumber(phys, 1)} لتر) هي المخزون الحالي
                 لهذا المصدر والنوع فقط.
               </p>
             </div>
@@ -202,7 +202,7 @@ export default function SalesInventoryPage() {
               <th className="px-3 py-2 text-right">المصدر</th>
               <th className="px-3 py-2 text-right">النوع</th>
               <th className="px-3 py-2 text-right">قبل الجرد</th>
-              <th className="px-3 py-2 text-right">فعلي / جديد</th>
+              <th className="px-3 py-2 text-right">الباقي / جديد</th>
               <th className="px-3 py-2 text-right">فرق</th>
               <th className="px-3 py-2 text-right">النوع</th>
               <th className="px-3 py-2 text-right">المستخدم</th>
@@ -243,7 +243,7 @@ export default function SalesInventoryPage() {
                     )}
                   >
                     {diffType === 'LOSS'
-                      ? `خسارة ${formatNumber(Number(c.lossQty), 1)}`
+                      ? `فرق ${formatNumber(Number(c.lossQty), 1)}`
                       : diffType === 'SURPLUS'
                         ? `فائض ${formatNumber(Number(c.surplusQty ?? c.difference), 1)}`
                         : 'متوازن'}

@@ -14,7 +14,7 @@ const TYPE_AR: Record<string, string> = {
   INVENTORY_COUNT: 'جرد',
   INVENTORY_ADJUSTMENT: 'تسوية جرد',
   ADJUSTMENT: 'تعديل',
-  LOSS: 'خسارة',
+  LOSS: 'فرق',
   MANUAL_CORRECTION: 'تصحيح يدوي',
 };
 

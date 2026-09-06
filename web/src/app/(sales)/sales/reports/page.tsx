@@ -336,8 +336,8 @@ export default function SalesReportsPage() {
                 <th className="px-2 py-1.5 text-right font-bold">المصدر</th>
                 <th className="px-2 py-1.5 text-right font-bold">النوع</th>
                 <th className="px-2 py-1.5 text-right font-bold">مباع</th>
-                <th className="px-2 py-1.5 text-right font-bold">المتبقي</th>
-                <th className="px-2 py-1.5 text-right font-bold">الخسارة</th>
+                <th className="px-2 py-1.5 text-right font-bold">المعروض</th>
+                <th className="px-2 py-1.5 text-right font-bold">الفرق</th>
                 <th className="px-2 py-1.5 text-right font-bold">صافي الإيراد</th>
               </tr>
             </thead>
@@ -508,8 +508,8 @@ export default function SalesReportsPage() {
                 {c.stock.totalSoldEmpty}
               </p>
               <p>
-                نظري {c.stock.theoreticalQty} · فعلي {c.stock.physicalQty ?? '—'} · تلف{' '}
-                {c.stock.totalDamaged} · خسارة {c.stock.lossQty}
+                المعروض {c.stock.theoreticalQty} · الباقي {c.stock.physicalQty ?? '—'} · تلف{' '}
+                {c.stock.totalDamaged} · الفرق {c.stock.lossQty}
               </p>
             </div>
           ))}
@@ -532,8 +532,8 @@ export default function SalesReportsPage() {
                   مضاف {formatNumber(st.totalAdded, 1)} · مباع {formatNumber(st.totalSold, 1)}
                 </p>
                 <p>
-                  نظري {formatNumber(st.theoreticalQty, 1)} · فعلي{' '}
-                  {st.physicalQty == null ? '—' : formatNumber(st.physicalQty, 1)} · خسارة{' '}
+                  المعروض {formatNumber(st.theoreticalQty, 1)} · الباقي{' '}
+                  {st.physicalQty == null ? '—' : formatNumber(st.physicalQty, 1)} · الفرق{' '}
                   {formatNumber(st.lossQty, 1)}
                 </p>
               </div>

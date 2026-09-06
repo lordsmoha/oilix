@@ -68,7 +68,7 @@ export const PERMISSION_LABELS_AR: Record<Permission, string> = {
   OIL_SALES_STOCK_VIEW: 'عرض المخزون',
   OIL_SALES_STOCK_ADD: 'إضافة مخزون',
   OIL_SALES_STOCK_ADJUST: 'تصحيح المخزون',
-  OIL_SALES_STOCK_LOSS: 'عرض الخسارة',
+  OIL_SALES_STOCK_LOSS: 'عرض الفرق',
   OIL_SALES_STOCK_OVERRIDE: 'تجاوز المخزون',
   OIL_SALES_INVENTORY_VIEW: 'عرض الجرد',
   OIL_SALES_INVENTORY_CREATE: 'تسجيل جرد',

@@ -199,7 +199,7 @@ export default function ContainerStockPage() {
         })
       ).data,
     onSuccess: () => {
-      toast.success('تم تأكيد جرد الضلف — الكمية الفعلية أصبحت المخزون الحالي');
+      toast.success('تم تأكيد جرد الضلف — كمية الباقي أصبحت المخزون الحالي');
       setPhysical('');
       setCountNote('');
       invalidate();
@@ -244,8 +244,8 @@ export default function ContainerStockPage() {
                 <span>تعبئة زيت {c.stock.totalConsumedInOil}</span>
                 <span>بيع فارغ {c.stock.totalSoldEmpty}</span>
                 <span>تلف {c.stock.totalDamaged}</span>
-                <span>نظري {c.stock.theoreticalQty}</span>
-                <span>فعلي {c.stock.physicalQty ?? '—'}</span>
+                <span>المعروض {c.stock.theoreticalQty}</span>
+                <span>الباقي {c.stock.physicalQty ?? '—'}</span>
               </dl>
             </button>
           );
@@ -279,7 +279,7 @@ export default function ContainerStockPage() {
                 countMut.mutate();
               }}
             >
-              <h2 className="font-black">جرد فعلي — {selected.name}</h2>
+              <h2 className="font-black">جرد الباقي — {selected.name}</h2>
               <p className="text-sm">
                 المخزون قبل الجرد: <strong>{theoretical}</strong>
                 {diffPreview != null ? (
@@ -292,9 +292,9 @@ export default function ContainerStockPage() {
                 ) : null}
               </p>
               <p className="text-xs text-[var(--app-text-dim)]">
-                بعد التأكيد تصبح الكمية الفعلية هي المخزون الحالي
+                بعد التأكيد تصبح كمية الباقي هي المخزون الحالي
               </p>
-              <Input label="الكمية الفعلية" inputMode="numeric" value={physical} onChange={(e) => setPhysical(e.target.value)} required />
+              <Input label="كمية الباقي" inputMode="numeric" value={physical} onChange={(e) => setPhysical(e.target.value)} required />
               <Input label="ملاحظة" value={countNote} onChange={(e) => setCountNote(e.target.value)} />
               <Button type="submit" loading={countMut.isPending} className="bg-amber-700 hover:bg-amber-800">
                 تأكيد الجرد وتعيين المخزون الجديد
@@ -392,7 +392,7 @@ export default function ContainerStockPage() {
                   <p className="text-xs text-[var(--app-text-dim)]">{formatDateTimeDz(c.createdAt)}</p>
                 </div>
                 <span>
-                  نظري {c.theoreticalBefore} · فعلي {c.physicalQty} · فرق {c.difference}
+                  المعروض {c.theoreticalBefore} · الباقي {c.physicalQty} · الفرق {c.difference}
                 </span>
               </li>
             ))}

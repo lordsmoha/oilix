@@ -10,7 +10,7 @@ export type DayReportColumn = {
   sold: number;
   /** الباقي */
   remaining: number;
-  /** الفرق (فعلي − نظري) */
+  /** الفرق (الباقي − المعروض) */
   difference: number;
   /** المجموع (إجمالي المبيعات) */
   gross: number;

@@ -801,7 +801,7 @@ export class OilSalesService {
   async inventoryCount(dto: InventoryCountDto, userId: string) {
     const seasonId = await this.seasonScope.getSeasonId();
     const physical = Number(dto.physicalQty);
-    if (!(physical >= 0)) throw new BadRequestException('الكمية الفعلية غير صالحة');
+    if (!(physical >= 0)) throw new BadRequestException('كمية الباقي غير صالحة');
 
     const result = await this.prisma.$transaction(async (tx) => {
       const bal = await this.lockBalance(tx, seasonId, dto.oilSource, dto.oilType);
@@ -846,9 +846,9 @@ export class OilSalesService {
       });
 
       const noteParts = [
-        `جرد فعلي → مخزون جديد ${recon.newCurrentStock} لتر`,
+        `جرد الباقي → مخزون جديد ${recon.newCurrentStock} لتر`,
         recon.differenceType === 'LOSS'
-          ? `خسارة ${recon.lossQty} لتر`
+          ? `فرق ${recon.lossQty} لتر`
           : recon.differenceType === 'SURPLUS'
             ? `فائض ${recon.surplusQty} لتر`
             : 'بدون فرق',
@@ -2429,7 +2429,7 @@ export class OilSalesService {
       const bal = await this.lockContainerBalance(tx, seasonId, dto.containerId);
       if (bal.theoreticalQty < qty) {
         throw new BadRequestException(
-          `المخزون النظري غير كافٍ لتسجيل التلف (المتاح: ${bal.theoreticalQty})`,
+          `المخزون المعروض غير كافٍ لتسجيل التلف (المتاح: ${bal.theoreticalQty})`,
         );
       }
       const stockBefore = bal.theoreticalQty;
@@ -2470,7 +2470,7 @@ export class OilSalesService {
 
   async containerInventoryCount(dto: ContainerInventoryCountDto, userId: string) {
     const physical = Math.trunc(Number(dto.physicalQty));
-    if (!(physical >= 0)) throw new BadRequestException('الكمية الفعلية غير صالحة');
+    if (!(physical >= 0)) throw new BadRequestException('كمية الباقي غير صالحة');
     const container = await this.prisma.oilContainer.findFirst({
       where: { id: dto.containerId, deletedAt: null },
     });
@@ -2532,7 +2532,7 @@ export class OilSalesService {
           inventoryCountId: count.id,
           note:
             dto.note?.trim() ||
-            `جرد فعلي → مخزون جديد ${newStock} (فرق ${difference})`,
+            `جرد الباقي → مخزون جديد ${newStock} (فرق ${difference})`,
           userId,
         },
       });
@@ -2549,7 +2549,7 @@ export class OilSalesService {
       module: AUDIT_MODULES.OIL_SALES,
       entity: 'OilContainerInventoryCount',
       entityId: result.id,
-      description: `جرد ضلف ${container.name}: نظري ${result.theoreticalBefore} → فعلي ${physical}`,
+      description: `جرد ضلف ${container.name}: المعروض ${result.theoreticalBefore} → الباقي ${physical}`,
     });
     this.emitSalesRealtime(REALTIME_ENTITIES.CONTAINER_STOCK, AUDIT_ACTIONS.UPDATE, seasonId, userId);
     return result;

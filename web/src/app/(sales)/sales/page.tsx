@@ -126,7 +126,7 @@ export default function SalesDashboardPage() {
           <p className="text-xs font-bold text-amber-800 dark:text-amber-400">بيع الزيت</p>
           <h1 className="text-2xl font-black text-[var(--app-text)]">لوحة التحكم</h1>
           <p className="mt-1 text-sm text-[var(--app-text-dim)]">
-            المخزون النظري / الفعلي · المبيعات · الخسائر
+            المخزون المعروض / الباقي · المبيعات · الفرق
           </p>
         </div>
         {canWrite || canSellContainers ? (
@@ -417,10 +417,10 @@ function SourceStockSection({
           <thead className="text-[11px] text-[var(--app-text-dim)]">
             <tr>
               <th className="px-2 py-1.5 text-right font-bold">النوع</th>
-              <th className="px-2 py-1.5 text-right font-bold">المتوفر</th>
+              <th className="px-2 py-1.5 text-right font-bold">المعروض</th>
               <th className="px-2 py-1.5 text-right font-bold">المباع</th>
               {canSeeLoss ? (
-                <th className="px-2 py-1.5 text-right font-bold">الخسارة</th>
+                <th className="px-2 py-1.5 text-right font-bold">الفرق</th>
               ) : null}
             </tr>
           </thead>
