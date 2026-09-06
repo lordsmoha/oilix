@@ -2252,11 +2252,12 @@ export class OilSalesService {
   }
 
   async createContainer(dto: CreateOilContainerDto, userId: string) {
+    const sku = dto.sku?.trim() || (await this.nextContainerSku());
     const row = await this.prisma.oilContainer.create({
       data: {
         name: dto.name.trim(),
         capacityL: dec(dto.capacityL),
-        sku: dto.sku?.trim() || null,
+        sku,
         costPrice: dto.costPrice != null ? dec(dto.costPrice) : null,
         unitPrice: dto.unitPrice != null ? dec(dto.unitPrice) : null,
         minStock: dto.minStock ?? 0,
@@ -2287,7 +2288,8 @@ export class OilSalesService {
       data: {
         name: dto.name.trim(),
         capacityL: dec(dto.capacityL),
-        sku: dto.sku !== undefined ? dto.sku?.trim() || null : existing.sku,
+        // SKU is assigned automatically on create and stays immutable
+        sku: existing.sku ?? (await this.nextContainerSku()),
         costPrice: dto.costPrice != null ? dec(dto.costPrice) : existing.costPrice,
         unitPrice: dto.unitPrice != null ? dec(dto.unitPrice) : existing.unitPrice,
         minStock: dto.minStock ?? existing.minStock,
@@ -2307,6 +2309,19 @@ export class OilSalesService {
       newData: row as unknown as Prisma.InputJsonValue,
     });
     return row;
+  }
+
+  private async nextContainerSku(): Promise<string> {
+    const rows = await this.prisma.oilContainer.findMany({
+      where: { sku: { startsWith: 'CNT-' } },
+      select: { sku: true },
+    });
+    let max = 0;
+    for (const r of rows) {
+      const m = /^CNT-(\d+)$/i.exec(r.sku ?? '');
+      if (m) max = Math.max(max, Number(m[1]));
+    }
+    return `CNT-${String(max + 1).padStart(4, '0')}`;
   }
 
   async containerStockOverview() {

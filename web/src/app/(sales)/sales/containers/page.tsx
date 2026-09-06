@@ -32,23 +32,25 @@ type Container = {
   };
 };
 
+const emptyForm = {
+  name: '',
+  capacityL: '',
+  unitPrice: '',
+  costPrice: '',
+  minStock: '0',
+  sortOrder: '0',
+  notes: '',
+  isActive: true,
+};
+
 export default function SalesContainersPage() {
   const qc = useQueryClient();
   const canCreate = useAuthStore((s) => s.hasPermission('OIL_SALES_CONTAINERS_CREATE'));
   const canEdit = useAuthStore((s) => s.hasPermission('OIL_SALES_CONTAINERS_EDIT'));
   const canDelete = useAuthStore((s) => s.hasPermission('OIL_SALES_CONTAINERS_DELETE'));
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState({
-    name: '',
-    capacityL: '',
-    unitPrice: '',
-    costPrice: '',
-    sku: '',
-    minStock: '0',
-    sortOrder: '0',
-    notes: '',
-    isActive: true,
-  });
+  const [editSku, setEditSku] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
 
   const listQ = useQuery({
     queryKey: ['oil-containers-all'],
@@ -62,7 +64,6 @@ export default function SalesContainersPage() {
         capacityL: Number(form.capacityL),
         unitPrice: form.unitPrice === '' ? undefined : Number(form.unitPrice),
         costPrice: form.costPrice === '' ? undefined : Number(form.costPrice),
-        sku: form.sku.trim() || undefined,
         minStock: Number(form.minStock || 0),
         sortOrder: Number(form.sortOrder || 0),
         notes: form.notes.trim() || undefined,
@@ -74,17 +75,8 @@ export default function SalesContainersPage() {
     onSuccess: () => {
       toast.success('تم حفظ التعبئة');
       setEditId(null);
-      setForm({
-        name: '',
-        capacityL: '',
-        unitPrice: '',
-        costPrice: '',
-        sku: '',
-        minStock: '0',
-        sortOrder: '0',
-        notes: '',
-        isActive: true,
-      });
+      setEditSku(null);
+      setForm(emptyForm);
       void qc.invalidateQueries({ queryKey: ['oil-containers-all'] });
       void qc.invalidateQueries({ queryKey: ['oil-containers'] });
     },
@@ -121,6 +113,17 @@ export default function SalesContainersPage() {
           onSubmit={onSubmit}
           className="grid gap-3 rounded-2xl border border-[var(--app-border)] bg-[var(--app-surface)] p-4 sm:grid-cols-2 lg:grid-cols-4"
         >
+          {editId ? (
+            <div className="rounded-xl border border-[var(--app-border)] bg-[var(--app-bg-muted)] px-3 py-2 sm:col-span-2 lg:col-span-1">
+              <p className="text-xs text-[var(--app-text-dim)]">المرجع / SKU</p>
+              <p className="font-mono text-sm font-bold tabular-nums">{editSku || '—'}</p>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-[var(--app-border)] px-3 py-2 sm:col-span-2 lg:col-span-1">
+              <p className="text-xs text-[var(--app-text-dim)]">المرجع / SKU</p>
+              <p className="text-sm font-bold text-[var(--app-text-dim)]">يُنشأ تلقائياً عند الحفظ</p>
+            </div>
+          )}
           <Input
             label="الاسم"
             value={form.name}
@@ -145,11 +148,6 @@ export default function SalesContainersPage() {
             inputMode="decimal"
             value={form.costPrice}
             onChange={(e) => setForm((f) => ({ ...f, costPrice: e.target.value }))}
-          />
-          <Input
-            label="المرجع / SKU"
-            value={form.sku}
-            onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value }))}
           />
           <Input
             label="الحد الأدنى للمخزون"
@@ -180,6 +178,19 @@ export default function SalesContainersPage() {
             <Button type="submit" loading={saveMut.isPending} className="bg-amber-700 hover:bg-amber-800">
               {editId ? 'تحديث' : 'إضافة'}
             </Button>
+            {editId ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setEditId(null);
+                  setEditSku(null);
+                  setForm(emptyForm);
+                }}
+              >
+                إلغاء
+              </Button>
+            ) : null}
           </div>
         </form>
       ) : null}
@@ -188,6 +199,7 @@ export default function SalesContainersPage() {
         <table className="w-full text-sm">
           <thead className="bg-[var(--app-bg-muted)]">
             <tr>
+              <th className="px-3 py-2.5 text-right font-bold">SKU</th>
               <th className="px-3 py-2.5 text-right font-bold">التعبئة</th>
               <th className="px-3 py-2.5 text-right font-bold">السعة</th>
               <th className="px-3 py-2.5 text-right font-bold">سعر البيع</th>
@@ -201,6 +213,7 @@ export default function SalesContainersPage() {
           <tbody>
             {(listQ.data ?? []).map((c) => (
               <tr key={c.id} className="border-t border-[var(--app-border)]">
+                <td className="px-3 py-2 font-mono text-xs tabular-nums">{c.sku || '—'}</td>
                 <td className="px-3 py-2 font-bold">{c.name}</td>
                 <td className="px-3 py-2 tabular-nums">{formatNumber(Number(c.capacityL), 0)} لتر</td>
                 <td className="px-3 py-2 tabular-nums">
@@ -230,12 +243,12 @@ export default function SalesContainersPage() {
                         variant="outline"
                         onClick={() => {
                           setEditId(c.id);
+                          setEditSku(c.sku ?? null);
                           setForm({
                             name: c.name,
                             capacityL: String(c.capacityL),
                             unitPrice: c.unitPrice == null ? '' : String(c.unitPrice),
                             costPrice: c.costPrice == null ? '' : String(c.costPrice),
-                            sku: c.sku ?? '',
                             minStock: String(c.minStock ?? 0),
                             sortOrder: String(c.sortOrder ?? 0),
                             notes: c.notes ?? '',

@@ -109,23 +109,29 @@ function ReportMatrix({
 }
 
 export function OilDayReportDocument({ data }: { data: OilDayReportPayload }) {
-  const stored = OIL_TYPES.map((t) =>
-    data.columns.find((c) => c.oilSource === 'STORED' && c.oilType === t.value),
-  ).filter(Boolean) as DayReportColumn[];
+  const zeroCol = (oilSource: string, oilType: string): DayReportColumn => ({
+    oilSource,
+    oilType,
+    offered: 0,
+    sold: 0,
+    remaining: 0,
+    difference: 0,
+    gross: 0,
+    assistance: 0,
+    net: 0,
+  });
 
-  const farmer = OIL_TYPES.map((t) =>
-    data.columns.find((c) => c.oilSource === 'FARMER' && c.oilType === t.value),
-  ).filter(Boolean) as DayReportColumn[];
+  const storedCols = OIL_TYPES.map(
+    (t) =>
+      data.columns.find((c) => c.oilSource === 'STORED' && c.oilType === t.value) ??
+      zeroCol('STORED', t.value),
+  );
 
-  // Prefer showing only columns that have stock or sales activity (like the sample slip)
-  const activeStored = stored.filter(
-    (c) => c.offered || c.sold || c.remaining || c.gross || c.assistance,
+  const farmerCols = OIL_TYPES.map(
+    (t) =>
+      data.columns.find((c) => c.oilSource === 'FARMER' && c.oilType === t.value) ??
+      zeroCol('FARMER', t.value),
   );
-  const activeFarmer = farmer.filter(
-    (c) => c.offered || c.sold || c.remaining || c.gross || c.assistance,
-  );
-  const storedCols = activeStored.length ? activeStored : stored;
-  const farmerCols = activeFarmer.length ? activeFarmer : farmer;
 
   return (
     <div
