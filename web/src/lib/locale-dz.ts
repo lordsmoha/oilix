@@ -64,6 +64,6 @@ export function formatDateTimeDz(d: string | Date = new Date()): string {
   }).format(new Date(d));
 }
 
-export function formatCurrencyDz(amount: number): string {
-  return `${formatMoneyDz(amount)} ${CURRENCY_SYMBOL}`;
+export function formatCurrencyDz(amount: number, decimals = 2): string {
+  return `${formatNumberDz(amount, decimals)} ${CURRENCY_SYMBOL}`;
 }
