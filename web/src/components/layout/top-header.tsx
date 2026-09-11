@@ -35,12 +35,12 @@ export function TopHeader({ onMenuClick }: Props) {
   }, []);
 
   return (
-    <header className="app-header no-print z-30 shrink-0 border-b border-[var(--app-border)] bg-[var(--app-surface)]">
+    <header className="app-header no-print z-30 shrink-0 border-b border-[var(--app-glass-border)]">
       <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
         <button
           type="button"
           onClick={onMenuClick}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--app-border)] bg-[var(--app-bg-muted)] text-[var(--app-text)] transition hover:border-[var(--app-accent)] hover:bg-[var(--app-primary-soft)] lg:hidden"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--app-glass-border)] bg-[var(--app-bg-muted)] text-[var(--app-text)] backdrop-blur-md transition hover:border-[var(--app-accent)] hover:bg-[var(--app-primary-soft)] lg:hidden"
           aria-label="فتح القائمة"
         >
           <Menu className="h-5 w-5" />
@@ -69,7 +69,7 @@ export function TopHeader({ onMenuClick }: Props) {
 
           <div
             className={cn(
-              'hidden shrink-0 rounded-xl border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2 text-left md:block',
+              'hidden shrink-0 rounded-xl border border-[var(--app-glass-border)] bg-[var(--app-bg-muted)] px-3 py-2 text-left backdrop-blur-md md:block',
               'shadow-sm transition hover:shadow-[var(--app-shadow-md)]',
             )}
             dir="ltr"

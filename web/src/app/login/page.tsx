@@ -27,7 +27,7 @@ function LoginInner() {
   const features = sales ? SALES_FEATURES : MILL_FEATURES;
 
   return (
-    <div className="login-page relative flex min-h-screen flex-col bg-[var(--app-bg)] lg:flex-row">
+    <div className="login-page relative flex min-h-screen flex-col lg:flex-row">
       <div className="absolute left-5 top-5 z-30 flex items-center gap-2 sm:left-8 sm:top-8">
         <FullscreenToggle />
         <ThemeToggle />

@@ -31,7 +31,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-screen bg-[var(--app-bg)] text-[var(--app-text)] antialiased">
+      <body className="min-h-screen text-[var(--app-text)] antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>

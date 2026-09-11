@@ -47,8 +47,8 @@ export function SalesShell({ children }: { children: React.ReactNode }) {
 
   if (!token) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--app-bg)]">
-        <div className="text-center">
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="app-glass-panel px-8 py-6 text-center">
           <Leaf className="mx-auto h-8 w-8 text-amber-700" />
           <p className="mt-2 text-sm text-[var(--app-text-dim)]">جاري التحميل...</p>
         </div>
@@ -57,17 +57,17 @@ export function SalesShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="app-shell flex flex-col bg-[var(--app-bg)]">
+    <div className="app-shell flex flex-col">
       <div className="app-shell-row">
         <SalesSidebar mobileOpen={sidebarOpen} onMobileClose={() => setSidebarOpen(false)} />
 
         <div className="app-content-panel">
-          <header className="no-print shrink-0 border-b border-amber-900/10 bg-[var(--app-surface)] dark:border-amber-500/15">
+          <header className="app-header no-print shrink-0 border-b border-[var(--app-glass-border)]">
             <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
               <button
                 type="button"
                 onClick={() => setSidebarOpen(true)}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--app-border)] bg-[var(--app-bg-muted)] lg:hidden"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--app-glass-border)] bg-[var(--app-bg-muted)] backdrop-blur-md lg:hidden"
                 aria-label="فتح القائمة"
               >
                 <Menu className="h-5 w-5" />

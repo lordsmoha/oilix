@@ -35,12 +35,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (!token) {
     return (
-      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[var(--app-bg)]">
+      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden">
         <div
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,color-mix(in_srgb,var(--app-accent)_12%,transparent),transparent)]"
           aria-hidden
         />
-        <div className="relative flex flex-col items-center gap-5">
+        <div className="app-glass-panel relative flex flex-col items-center gap-5 px-10 py-8">
           <div className="app-brand-loader flex h-16 w-16 items-center justify-center rounded-[var(--app-radius-lg)] bg-gradient-to-br from-[var(--app-accent)] to-[var(--app-accent-dark)] text-white">
             <Leaf className="h-8 w-8" strokeWidth={2} />
           </div>
@@ -57,7 +57,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="app-shell flex flex-col bg-[var(--app-bg)]">
+    <div className="app-shell flex flex-col">
       <div className="app-shell-row">
         <AppSidebar mobileOpen={sidebarOpen} onMobileClose={() => setSidebarOpen(false)} />
 

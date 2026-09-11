@@ -4,11 +4,11 @@ type CardVariant = 'default' | 'glass' | 'elevated';
 
 const variants: Record<CardVariant, string> = {
   default:
-    'rounded-[var(--app-radius-lg)] border border-[var(--app-border)] bg-[var(--app-surface)] shadow-[var(--app-shadow-md)]',
+    'rounded-[var(--app-radius-lg)] border border-[var(--app-glass-border)] bg-[var(--app-glass)] shadow-[var(--app-shadow-md)] backdrop-blur-xl [box-shadow:var(--app-shadow-md),inset_0_1px_0_var(--app-glass-highlight)]',
   glass:
-    'rounded-[var(--app-radius-lg)] border border-[var(--app-glass-border)] bg-[var(--app-glass)] shadow-[var(--app-shadow-md)] backdrop-blur-xl',
+    'rounded-[var(--app-radius-lg)] border border-[var(--app-glass-border)] bg-[var(--app-glass)] shadow-[var(--app-shadow-md)] backdrop-blur-2xl [box-shadow:var(--app-shadow-md),inset_0_1px_0_var(--app-glass-highlight)]',
   elevated:
-    'rounded-[var(--app-radius-xl)] border border-[var(--app-border)] bg-[var(--app-surface-elevated)] shadow-[var(--app-shadow-lg)]',
+    'rounded-[var(--app-radius-xl)] border border-[var(--app-glass-border)] bg-[var(--app-surface-elevated)] shadow-[var(--app-shadow-lg)] backdrop-blur-xl [box-shadow:var(--app-shadow-lg),inset_0_1px_0_var(--app-glass-highlight)]',
 };
 
 export function Card({

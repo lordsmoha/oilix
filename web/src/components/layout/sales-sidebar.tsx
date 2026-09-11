@@ -44,9 +44,8 @@ export function SalesSidebar({ mobileOpen, onMobileClose }: Props) {
         className={cn(
           'app-sidebar no-print fixed z-50 flex w-[min(calc(100vw-2*var(--app-shell-pad)),18rem)] flex-col',
           'top-[max(var(--app-shell-pad),env(safe-area-inset-top,0px))] bottom-[max(var(--app-shell-pad),env(safe-area-inset-bottom,0px))] right-[var(--app-shell-pad)]',
-          'rounded-[var(--app-panel-radius)] border border-amber-900/12 bg-gradient-to-b from-[#fffaf0] to-[#f7f0e4]',
-          'shadow-[var(--app-shadow)] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
-          'dark:from-[#1a1610] dark:to-[#14110d] dark:border-amber-500/20',
+          'rounded-[var(--app-panel-radius)]',
+          'transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
           'lg:static lg:z-auto lg:h-full lg:min-h-0 lg:w-[var(--app-sidebar-width)] lg:shrink-0 lg:translate-x-0',
           mobileOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0',
         )}
