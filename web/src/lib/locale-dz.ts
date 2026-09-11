@@ -11,6 +11,37 @@ export const PHONE_PLACEHOLDER = '05XX XX XX XX';
 
 /** Western digits: 1,234.56 (not ar-DZ 1.234,56) */
 const NUMBER_LOCALE = 'en-US';
+/** Ensures dd/mm/yyyy with Latin digits */
+const DATE_LOCALE = 'en-GB';
+
+function dzDateParts(d: string | Date) {
+  const parts = new Intl.DateTimeFormat(DATE_LOCALE, {
+    timeZone: TIMEZONE_DZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date(d));
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? '';
+  return {
+    day: get('day'),
+    month: get('month'),
+    year: get('year'),
+    hour: get('hour'),
+    minute: get('minute'),
+    second: get('second'),
+  };
+}
+
+/** Always dd/mm/yyyy */
+export function formatDatePartsDdMmYyyy(d: string | Date): string {
+  const { day, month, year } = dzDateParts(d);
+  return `${day}/${month}/${year}`;
+}
 
 export function formatNumberDz(n: number, decimals = 2): string {
   return new Intl.NumberFormat(NUMBER_LOCALE, {
@@ -24,44 +55,25 @@ export function formatMoneyDz(amount: number): string {
   return formatNumberDz(amount, 2);
 }
 
+/** dd/mm/yyyy */
 export function formatDateDz(d: string | Date): string {
-  return new Intl.DateTimeFormat(LOCALE_DZ, {
-    timeZone: TIMEZONE_DZ,
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(new Date(d));
+  return formatDatePartsDdMmYyyy(d);
 }
 
-/** Format courant en Algérie : jj/mm/aaaa */
+/** dd/mm/yyyy */
 export function formatDateShortDz(d: string | Date): string {
-  return new Intl.DateTimeFormat(LOCALE_DZ, {
-    timeZone: TIMEZONE_DZ,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date(d));
+  return formatDatePartsDdMmYyyy(d);
 }
 
 export function formatTimeDz(d: string | Date = new Date()): string {
-  return new Intl.DateTimeFormat(LOCALE_DZ, {
-    timeZone: TIMEZONE_DZ,
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).format(new Date(d));
+  const { hour, minute } = dzDateParts(d);
+  return `${hour}:${minute}`;
 }
 
+/** dd/mm/yyyy HH:mm */
 export function formatDateTimeDz(d: string | Date = new Date()): string {
-  return new Intl.DateTimeFormat(LOCALE_DZ, {
-    timeZone: TIMEZONE_DZ,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).format(new Date(d));
+  const { day, month, year, hour, minute } = dzDateParts(d);
+  return `${day}/${month}/${year} ${hour}:${minute}`;
 }
 
 export function formatCurrencyDz(amount: number, decimals = 2): string {

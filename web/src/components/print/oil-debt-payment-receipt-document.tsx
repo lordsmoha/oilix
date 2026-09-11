@@ -1,4 +1,4 @@
-import { formatNumber } from '@/lib/utils';
+import { formatNumber, formatDateTimeDz } from '@/lib/utils';
 
 export type OilDebtPaymentReceiptPayload = {
   payment: {
@@ -59,7 +59,7 @@ export function OilDebtPaymentReceiptDocument({
         />
         <Row
           label="التاريخ"
-          value={new Date(payment.createdAt).toLocaleString('ar-DZ')}
+          value={formatDateTimeDz(payment.createdAt)}
         />
         <Row label="الزبون" value={customer.name} bold />
         {customer.phone ? <Row label="الهاتف" value={customer.phone} /> : null}

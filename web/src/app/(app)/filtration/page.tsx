@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Droplets, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
-import { cn, formatNumber } from '@/lib/utils';
+import { cn, formatNumber, formatDateTimeDz } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ModulePageHero } from '@/components/ui/module-page-hero';
@@ -327,7 +327,7 @@ export default function FiltrationPage() {
                       {row.createdBy?.firstName || row.createdBy?.username || '—'}
                     </td>
                     <td className="px-3 py-3 text-[var(--app-text-dim)]" dir="ltr">
-                      {new Date(row.createdAt).toLocaleString('ar-DZ')}
+                      {formatDateTimeDz(row.createdAt)}
                     </td>
                     <td className="px-3 py-3">
                       {canWrite ? (

@@ -1,4 +1,5 @@
 import { formatNumber } from '@/lib/utils';
+import { formatDateShortDz } from '@/lib/locale-dz';
 import { oilMeta, oilSourceMeta } from '@/lib/sales-nav';
 
 export type OilSaleReceiptPayload = {
@@ -90,7 +91,7 @@ export function OilSaleReceiptDocument({ data }: { data: OilSaleReceiptPayload }
         <Row label="رقم الوصل" value={String(sale.receiptNumber).padStart(7, '0')} bold />
         <Row
           label="التاريخ"
-          value={`${new Date(sale.saleDate).toLocaleDateString('ar-DZ')} ${sale.saleTime}`}
+          value={`${formatDateShortDz(sale.saleDate)} ${sale.saleTime}`}
         />
         <Row label="الزبون" value={sale.customer.name} bold />
         {sale.customer.phone ? <Row label="الهاتف" value={sale.customer.phone} /> : null}
